@@ -1,0 +1,9 @@
+D:\certificado-digicon\backend\obj\Debug\net9.0\backend.csproj.AssemblyReference.cache
+D:\certificado-digicon\backend\obj\Debug\net9.0\rpswa.dswa.cache.json
+D:\certificado-digicon\backend\obj\Debug\net9.0\backend.GeneratedMSBuildEditorConfig.editorconfig
+D:\certificado-digicon\backend\obj\Debug\net9.0\backend.AssemblyInfoInputs.cache
+D:\certificado-digicon\backend\obj\Debug\net9.0\backend.AssemblyInfo.cs
+D:\certificado-digicon\backend\obj\Debug\net9.0\backend.csproj.CoreCompileInputs.cache
+D:\certificado-digicon\backend\obj\Debug\net9.0\backend.MvcApplicationPartsAssemblyInfo.cs
+D:\certificado-digicon\backend\obj\Debug\net9.0\backend.MvcApplicationPartsAssemblyInfo.cache
+D:\certificado-digicon\backend\obj\Debug\net9.0\backend.sourcelink.json
