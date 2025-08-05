@@ -1,7 +1,7 @@
-namespace backend.Models
+namespace certificado_digicon.Models
 {
     public class CertificadoPathConfig
     {
-        public string PastaCertificados { get; set; }
+        public string Path { get; set; }
     }
 }

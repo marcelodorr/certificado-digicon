@@ -9,5 +9,7 @@ namespace backend.Data
 
         public DbSet<QualityCertificate> QualityCertificates { get; set; }
         public DbSet<Operacao> Operacoes { get; set; }
+        public DbSet<ClienteModel> Cliente { get; set; }
+
     }
 }

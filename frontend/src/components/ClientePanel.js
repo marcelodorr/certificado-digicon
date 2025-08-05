@@ -1,4 +1,3 @@
-// src/components/ClientePanel.js
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { DataGrid, GridActionsCellItem } from "@mui/x-data-grid";
@@ -10,13 +9,13 @@ const ClientePanel = () => {
   const [clientes, setClientes] = useState([]);
   const [formCliente, setFormCliente] = useState({
     id: 0,
-    Nome: "",
+    cliente: "", // Usando 'cliente' com 'c' minúsculo
     CreateBy: "Sistema",
   });
   const [isEditing, setIsEditing] = useState(false);
   const [message, setMessage] = useState("");
 
-  const API_URL = "/api/cliente";
+  const API_URL = "http://localhost:7105/api/Cliente";
 
   useEffect(() => {
     fetchClientes();
@@ -25,6 +24,7 @@ const ClientePanel = () => {
   const fetchClientes = async () => {
     try {
       const response = await axios.get(API_URL);
+      console.log(response.data); // Verifique o formato dos dados recebidos
       setClientes(response.data);
       setMessage("");
     } catch (error) {
@@ -60,7 +60,7 @@ const ClientePanel = () => {
             : "Cliente adicionado com sucesso!")
       );
 
-      setFormCliente({ id: 0, Nome: "", CreateBy: "Sistema" });
+      setFormCliente({ id: 0, cliente: "", CreateBy: "Sistema" });
       setIsEditing(false);
       fetchClientes();
     } catch (error) {
@@ -78,8 +78,8 @@ const ClientePanel = () => {
   const handleEdit = (cliente) => {
     setFormCliente({
       id: cliente.id,
-      Nome: cliente.nome,
-      CreateBy: cliente.createBy || "Sistema",
+      cliente: cliente.cliente, // Usando 'cliente' com 'c' minúsculo
+      CreateBy: cliente.CreateBy || "Sistema",
     });
     setIsEditing(true);
     setMessage("");
@@ -105,19 +105,26 @@ const ClientePanel = () => {
   };
 
   const handleCancelEdit = () => {
-    setFormCliente({ id: 0, Nome: "", CreateBy: "Sistema" });
+    setFormCliente({ id: 0, cliente: "", CreateBy: "Sistema" });
     setIsEditing(false);
     setMessage("");
   };
 
   const columns = [
-    { field: "id", headerName: "ID", width: 80 },
-    { field: "nome", headerName: "Cliente", flex: 1 },
+    { field: "id", headerName: "ID", minwidth: 150, maxWidth: 150 },
+    {
+      field: "cliente",
+      headerName: "Cliente",
+      flex: 1,
+      minWidth: 499,
+      maxWidth: 500,
+    }, // Usando 'cliente' com 'c' minúsculo
     {
       field: "actions",
       headerName: "Ações",
       type: "actions",
-      width: 100,
+      minwidth: 129,
+      maxWidth: 130,
       getActions: (params) => [
         <GridActionsCellItem
           icon={<EditIcon />}
@@ -183,8 +190,8 @@ const ClientePanel = () => {
       >
         <TextField
           label="Nome do Cliente"
-          name="Nome"
-          value={formCliente.Nome}
+          name="cliente" // Usando 'cliente' com 'c' minúsculo
+          value={formCliente.cliente} // Usando 'cliente' com 'c' minúsculo
           onChange={handleChange}
           required
           fullWidth
@@ -244,7 +251,7 @@ const ClientePanel = () => {
       <DataGrid
         rows={clientes}
         columns={columns}
-        pageSizeOptions={[5, 10, 25]}
+        pageSizeOptions={[10, 25]}
         initialState={{
           pagination: { paginationModel: { pageSize: 10, page: 0 } },
         }}
@@ -254,7 +261,7 @@ const ClientePanel = () => {
           noRowsLabel: "Nenhum cliente cadastrado.",
         }}
         sx={{
-          height: 400,
+          height: 500,
         }}
       />
     </Box>

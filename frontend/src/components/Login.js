@@ -17,11 +17,14 @@ const Login = ({ onLogin }) => {
     setError("");
 
     try {
-      const response = await fetch("/api/Login/autenticar", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
+      const response = await fetch(
+        "http://localhost:7105/api/Login/authenticate",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ User: username, Password: password }), // Mude 'username' para 'User'
+        }
+      );
 
       if (response.ok) {
         // Login OK
@@ -40,10 +43,13 @@ const Login = ({ onLogin }) => {
     setRegisterMessage("");
 
     try {
-      const response = await fetch("/api/Login/create-user", {
+      const response = await fetch("http://localhost:7105/api/Login/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: newUsername, password: newPassword }),
+        body: JSON.stringify({
+          username: newUsername,
+          password: newPassword,
+        }),
       });
 
       if (response.ok) {
