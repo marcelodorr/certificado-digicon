@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from "react";
+import {
+  Snackbar,
+  Alert,
+  AlertTitle,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Button,
+} from "@mui/material";
 import axios from "axios";
 import { DataGrid, GridActionsCellItem } from "@mui/x-data-grid";
-import { Box, Button, TextField } from "@mui/material";
+import { Box, TextField } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 
@@ -15,6 +25,17 @@ const ClientePanel = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [message, setMessage] = useState("");
 
+  // Controlando os alertas
+  const [alert, setAlert] = useState({
+    open: false,
+    message: "",
+    severity: "", // 'success', 'error', etc.
+  });
+
+  // Controlando o dialog de confirmação de exclusão
+  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedClientId, setSelectedClientId] = useState(null);
+
   const API_URL = "http://localhost:7105/api/Cliente";
 
   useEffect(() => {
@@ -24,15 +45,14 @@ const ClientePanel = () => {
   const fetchClientes = async () => {
     try {
       const response = await axios.get(API_URL);
-      console.log(response.data); // Verifique o formato dos dados recebidos
       setClientes(response.data);
       setMessage("");
     } catch (error) {
-      console.error("Erro ao buscar clientes:", error);
-      setMessage(
-        "Erro ao carregar clientes: " +
-          (error.response?.data?.message || error.message)
-      );
+      setAlert({
+        open: true,
+        message: "Erro ao carregar clientes.",
+        severity: "error",
+      });
     }
   };
 
@@ -49,29 +69,29 @@ const ClientePanel = () => {
       let response;
       if (isEditing) {
         response = await axios.put(API_URL, formCliente);
+        setAlert({
+          open: true,
+          message: "Cliente editado com sucesso!",
+          severity: "success",
+        });
       } else {
         response = await axios.post(API_URL, formCliente);
+        setAlert({
+          open: true,
+          message: "Cliente adicionado com sucesso!",
+          severity: "success",
+        });
       }
-
-      setMessage(
-        response.data.message ||
-          (isEditing
-            ? "Cliente editado com sucesso!"
-            : "Cliente adicionado com sucesso!")
-      );
 
       setFormCliente({ id: 0, cliente: "", CreateBy: "Sistema" });
       setIsEditing(false);
       fetchClientes();
     } catch (error) {
-      console.error("Erro ao salvar cliente:", error);
-      setMessage(
-        `Erro: ${
-          error.response?.data?.message ||
-          error.message ||
-          "Ocorreu um erro desconhecido."
-        }`
-      );
+      setAlert({
+        open: true,
+        message: `Erro: ${error.message}`,
+        severity: "error",
+      });
     }
   };
 
@@ -85,22 +105,34 @@ const ClientePanel = () => {
     setMessage("");
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("Tem certeza que deseja excluir este cliente?")) {
-      try {
-        const response = await axios.delete(`${API_URL}/${id}`);
-        setMessage(response.data.message || "Cliente excluído com sucesso!");
-        fetchClientes();
-      } catch (error) {
-        console.error("Erro ao excluir cliente:", error);
-        setMessage(
-          `Erro: ${
-            error.response?.data?.message ||
-            error.message ||
-            "Erro ao excluir cliente."
-          }`
-        );
-      }
+  const handleDeleteDialogOpen = (id) => {
+    setSelectedClientId(id);
+    setOpenDialog(true); // Abre o dialog de confirmação
+  };
+
+  const handleDeleteDialogClose = () => {
+    setOpenDialog(false); // Fecha o dialog sem excluir
+    setSelectedClientId(null);
+  };
+
+  const handleDelete = async () => {
+    if (selectedClientId === null) return;
+
+    try {
+      const response = await axios.delete(`${API_URL}/${selectedClientId}`);
+      setAlert({
+        open: true,
+        message: response.data.message || "Cliente excluído com sucesso!",
+        severity: "success",
+      });
+      fetchClientes();
+      setOpenDialog(false); // Fecha o dialog após a exclusão
+    } catch (error) {
+      setAlert({
+        open: true,
+        message: `Erro: ${error.message}`,
+        severity: "error",
+      });
     }
   };
 
@@ -118,7 +150,7 @@ const ClientePanel = () => {
       flex: 1,
       minWidth: 499,
       maxWidth: 500,
-    }, // Usando 'cliente' com 'c' minúsculo
+    },
     {
       field: "actions",
       headerName: "Ações",
@@ -135,7 +167,7 @@ const ClientePanel = () => {
         <GridActionsCellItem
           icon={<DeleteIcon />}
           label="Excluir"
-          onClick={() => handleDelete(params.id)}
+          onClick={() => handleDeleteDialogOpen(params.id)} // Abre o dialog
           showInMenu={false}
         />,
       ],
@@ -157,27 +189,6 @@ const ClientePanel = () => {
     >
       <h2>Cadastro de Clientes</h2>
 
-      {message && (
-        <Box
-          sx={{
-            mb: 2,
-            p: 1,
-            borderRadius: 1,
-            bgcolor: message.startsWith("Erro")
-              ? "error.light"
-              : "success.light",
-            color: message.startsWith("Erro") ? "error.main" : "success.main",
-            border: "1px solid",
-            borderColor: message.startsWith("Erro")
-              ? "error.main"
-              : "success.main",
-            textAlign: "center",
-          }}
-        >
-          {message}
-        </Box>
-      )}
-
       <Box
         component="form"
         sx={{
@@ -190,8 +201,8 @@ const ClientePanel = () => {
       >
         <TextField
           label="Nome do Cliente"
-          name="cliente" // Usando 'cliente' com 'c' minúsculo
-          value={formCliente.cliente} // Usando 'cliente' com 'c' minúsculo
+          name="cliente"
+          value={formCliente.cliente}
           onChange={handleChange}
           required
           fullWidth
@@ -264,6 +275,40 @@ const ClientePanel = () => {
           height: 500,
         }}
       />
+
+      {/* Snackbar para exibir alertas */}
+      <Snackbar
+        open={alert.open}
+        autoHideDuration={6000} // Tempo de exibição do alerta
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        onClose={() => setAlert({ ...alert, open: false })}
+      >
+        <Alert
+          severity={alert.severity}
+          onClose={() => setAlert({ ...alert, open: false })}
+        >
+          <AlertTitle>
+            {alert.severity === "success" ? "Sucesso" : "Erro"}
+          </AlertTitle>
+          {alert.message}
+        </Alert>
+      </Snackbar>
+
+      {/* Dialog de confirmação de exclusão */}
+      <Dialog open={openDialog} onClose={handleDeleteDialogClose}>
+        <DialogTitle>Confirmar Exclusão</DialogTitle>
+        <DialogContent>
+          <p>Você tem certeza que deseja excluir este cliente?</p>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteDialogClose} color="primary">
+            Cancelar
+          </Button>
+          <Button onClick={handleDelete} color="secondary">
+            Excluir
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

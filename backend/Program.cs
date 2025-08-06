@@ -11,7 +11,7 @@ builder.Services.AddSwaggerGen();
 // Adiciona os serviços do backend
 builder.Services.AddScoped<QualityCertificateService>();
 builder.Services.AddScoped<OperacaoService>();
-builder.Services.AddScoped<NormasService>();
+builder.Services.AddScoped<NormaService>();
 builder.Services.AddScoped<ClienteService>();
 
 // Configuração do CORS - Permite requisições de qualquer origem

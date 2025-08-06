@@ -1,6 +1,4 @@
-using System.ComponentModel.DataAnnotations.Schema;
-
-public class QualityCertificate
+public class QualityCertificateModel
 {
     public int Id { get; set; }
     public string NumeroCertificado { get; set; }
@@ -26,7 +24,6 @@ public class QualityCertificate
     public string SNPeca { get; set; }
     public string TipoEnvio { get; set; }
     public string DescricaoOperacao { get; set; }
-    public string Data { get; set; }
-    public DateTime CreateDate { get; set; }
 
+    public DateTime Data { get; set; } = DateTime.Now;// Deve ser DateTime, não string
 }

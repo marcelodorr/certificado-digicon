@@ -35,7 +35,6 @@ h2 {
   display: flex;
   font-size: 14px;
   height: 54px;
-  //padding: 6px 12px;
   padding: 10px;
   box-sizing: border-box;
 }
@@ -68,100 +67,4 @@ h2 {
 .custom-box .MuiButton-outlined:hover {
   border-color: #636363ff;
   color: #636363ff;
-}
-
-/* Espaço entre botões no formulário */
-.custom-box > .MuiButton-root + .MuiButton-root {
-  margin-left: 12px;
-}
-
-/* DataGrid container para altura e largura */
-.MuiDataGrid-root {
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  font-size: 0.9rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-}
-
-/* Cabeçalho DataGrid com cor tema vermelho */
-.MuiDataGrid-columnHeaders {
-  background-color: #bb0c0c;
-  color: white;
-  font-weight: 600;
-  font-size: 0.95rem;
-}
-
-/* Linhas alternadas */
-.MuiDataGrid-row:nth-of-type(even) {
-  background-color: #fafafa;
-}
-
-/* Linha hover */
-.MuiDataGrid-row:hover {
-  background-color: #f5f5f5;
-}
-
-/* Mensagem de sucesso/erro */
-.MuiBox-root > div[role="alert"] {
-  font-weight: 600;
-  font-size: 0.95rem;
-  border-radius: 8px;
-}
-
-/* Botões */
-.MuiButton-root.button {
-  background-color: #a80909ff;
-  color: #fff;
-  text-transform: none;
-  min-width: 140px;
-  transition: background-color 0.3s ease;
-}
-
-.MuiButton-root.button:hover {
-  background-color: #bb0c0cff;
-}
-
-/* Botão cancelar (outlined e vermelho) */
-.MuiButton-root.MuiButton-outlined {
-  min-width: 140px;
-  text-transform: none;
-}
-
-/* Container do DataGrid */
-.MuiDataGrid-root {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  font-size: 0.9rem;
-}
-
-/* Cabeçalho do DataGrid */
-.MuiDataGrid-columnHeaders {
-  background-color: #bb0c0cff !important;
-  color: white;
-  font-weight: 600;
-}
-
-/* Linhas pares */
-.MuiDataGrid-row:nth-of-type(even) {
-  background-color: #fafafa;
-}
-
-/* Hover nas linhas */
-.MuiDataGrid-row:hover {
-  background-color: #f5f5f5;
-}
-
-/* Ícones de ação (Edit/Delete) - cor e tamanho */
-.MuiSvgIcon-root {
-  font-size: 20px;
-}
-
-/* Ajuste geral do painel */
-.MuiBox-root {
-  max-width: 800px;
-  margin: auto;
-  padding: 16px;
-  background-color: #fff;
-  box-shadow: 0 2px 10px rgb(0 0 0 / 0.1);
-  border-radius: 12px;
 }

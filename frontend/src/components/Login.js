@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import logo from "../assets/digicon_logo.png";
+import { Snackbar, Alert, AlertTitle } from "@mui/material";
 import "./Login.css";
 
 const Login = ({ onLogin }) => {
@@ -12,6 +13,12 @@ const Login = ({ onLogin }) => {
   const [newPassword, setNewPassword] = useState("");
   const [registerMessage, setRegisterMessage] = useState("");
 
+  const [alert, setAlert] = useState({
+    open: false,
+    message: "",
+    severity: "", // 'success', 'error', etc.
+  });
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
@@ -22,19 +29,34 @@ const Login = ({ onLogin }) => {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ User: username, Password: password }), // Mude 'username' para 'User'
+          body: JSON.stringify({ User: username, Password: password }),
         }
       );
 
       if (response.ok) {
         // Login OK
         onLogin();
+        setAlert({
+          open: true,
+          message: "Login realizado com sucesso!",
+          severity: "success",
+        });
       } else {
         // Login falhou
-        setError("Usuário ou senha incorretos.");
+        //setError("Usuário ou senha incorretos.");
+        setAlert({
+          open: true,
+          message: "Usuário ou senha incorretos.",
+          severity: "error",
+        });
       }
     } catch (err) {
       setError("Erro ao conectar ao servidor.");
+      setAlert({
+        open: true,
+        message: "Erro ao conectar ao servidor.",
+        severity: "error",
+      });
     }
   };
 
@@ -53,18 +75,34 @@ const Login = ({ onLogin }) => {
       });
 
       if (response.ok) {
-        setRegisterMessage("Usuário criado com sucesso!");
+        //setRegisterMessage("Usuário criado com sucesso!");
         setNewUsername("");
         setNewPassword("");
+        setAlert({
+          open: true,
+          message: "Usuário criado com sucesso!",
+          severity: "success",
+        });
+
         setTimeout(() => {
           setShowDialog(false);
           setRegisterMessage("");
         }, 1500);
       } else {
         setRegisterMessage("Erro ao criar usuário.");
+        setAlert({
+          open: true,
+          message: "Erro ao criar usuário.",
+          severity: "error",
+        });
       }
     } catch (err) {
       setRegisterMessage("Erro ao conectar ao servidor.");
+      setAlert({
+        open: true,
+        message: "Erro ao conectar ao servidor.",
+        severity: "error",
+      });
     }
   };
 
@@ -134,6 +172,24 @@ const Login = ({ onLogin }) => {
           </div>
         </div>
       )}
+
+      {/* Snackbar para exibir alertas */}
+      <Snackbar
+        open={alert.open}
+        autoHideDuration={6000} // Tempo de exibição do alerta
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        onClose={() => setAlert({ ...alert, open: false })}
+      >
+        <Alert
+          severity={alert.severity}
+          onClose={() => setAlert({ ...alert, open: false })}
+        >
+          <AlertTitle>
+            {alert.severity === "success" ? "Sucesso" : "Erro"}
+          </AlertTitle>
+          {alert.message}
+        </Alert>
+      </Snackbar>
     </div>
   );
 };

@@ -1,9 +1,18 @@
-// src/components/OperacoesPanel.js
-
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { DataGrid, GridActionsCellItem } from "@mui/x-data-grid";
-import { Box, Button, TextField } from "@mui/material";
+import {
+  Box,
+  Button,
+  TextField,
+  Snackbar,
+  Alert,
+  AlertTitle,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+} from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 
@@ -12,19 +21,33 @@ function OperacoesPanel() {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     id: 0,
-    numero_op: "",
-    descricao_op: "",
+    operationQuantity: "",
+    operationDescription: "",
   });
 
-  const API_URL = "/api/operacoes";
+  const [alert, setAlert] = useState({
+    open: false,
+    message: "",
+    severity: "", // 'success', 'error', etc.
+  });
+
+  // Dialog state for confirmation of deletion
+  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedOperacaoId, setSelectedOperacaoId] = useState(null);
+
+  const API_URL = "http://localhost:7105/api/Operacao"; // Certifique-se de que o endpoint está correto
 
   const fetchOperacoes = async () => {
     try {
-      const res = await axios.get(`${API_URL}`);
+      const res = await axios.get(API_URL);
       setOperacoes(res.data);
     } catch (err) {
       console.error(err);
-      alert("Erro ao carregar operações.");
+      setAlert({
+        open: true,
+        message: "Erro ao carregar operações.",
+        severity: "error",
+      });
     }
   };
 
@@ -41,64 +64,109 @@ function OperacoesPanel() {
     try {
       if (isEditing) {
         await axios.put(API_URL, formData);
-        alert("Operação atualizada com sucesso.");
+        setAlert({
+          open: true,
+          message: "Operação atualizada com sucesso.",
+          severity: "success",
+        });
       } else {
         await axios.post(API_URL, formData);
-        alert("Operação salva com sucesso.");
+        setAlert({
+          open: true,
+          message: "Operação salva com sucesso.",
+          severity: "success",
+        });
       }
-      setFormData({ id: 0, numero_op: "", descricao_op: "" });
+      setFormData({ id: 0, operationQuantity: "", operationDescription: "" });
       setIsEditing(false);
       fetchOperacoes();
     } catch {
-      alert("Erro ao salvar operação.");
+      setAlert({
+        open: true,
+        message: "Erro ao salvar operação.",
+        severity: "error",
+      });
     }
   };
 
   const handleCancelEdit = () => {
-    setFormData({ id: 0, numero_op: "", descricao_op: "" });
+    setFormData({ id: 0, operationQuantity: "", operationDescription: "" });
     setIsEditing(false);
   };
 
   const handleEditOperacao = (op) => {
     setFormData({
       id: op.id,
-      numero_op: op.numero_op,
-      descricao_op: op.descricao_op,
+      operationQuantity: op.operationQuantity,
+      operationDescription: op.operationDescription,
     });
     setIsEditing(true);
   };
 
-  const handleDeleteOperacao = async (id) => {
-    if (!window.confirm("Deseja realmente excluir esta operação?")) return;
+  // Open confirmation dialog for deletion
+  const handleDeleteDialogOpen = (id) => {
+    setSelectedOperacaoId(id);
+    setOpenDialog(true);
+  };
+
+  // Close the confirmation dialog
+  const handleDeleteDialogClose = () => {
+    setOpenDialog(false);
+    setSelectedOperacaoId(null);
+  };
+
+  const handleDelete = async () => {
+    if (selectedOperacaoId === null) return;
+
     try {
-      await axios.delete(`${API_URL}/${id}`);
-      alert("Operação excluída com sucesso.");
+      await axios.delete(`${API_URL}/${selectedOperacaoId}`);
+      setAlert({
+        open: true,
+        message: "Operação excluída com sucesso.",
+        severity: "success",
+      });
       fetchOperacoes();
+      setOpenDialog(false); // Close the dialog after deletion
     } catch {
-      alert("Erro ao excluir operação.");
+      setAlert({
+        open: true,
+        message: "Erro ao excluir operação.",
+        severity: "error",
+      });
     }
   };
 
   const columns = [
     {
-      field: "numero_op",
-      headerName: "Número OP",
+      field: "operationQuantity",
+      headerName: "Qnt. Operações",
       flex: 1,
-      maxWidth: 120,
       minWidth: 120,
+      maxWidth: 120,
     },
     {
-      field: "descricao_op",
+      field: "operationDescription",
       headerName: "Descrição da Operação",
       flex: 1,
-      minWidth: 580,
+      minWidth: 400,
+      maxWidth: 600,
+      renderCell: (params) => (
+        <div
+          style={{
+            wordWrap: "break-word", // Quebra de palavra
+            whiteSpace: "normal", // Permite a quebra de linha
+          }}
+        >
+          {params.value}
+        </div>
+      ),
     },
     {
       field: "actions",
       headerName: "Ações",
       type: "actions",
-      maxwidth: 200,
-      minwidth: 200,
+      maxWidth: 200,
+      minWidth: 200,
       getActions: (params) => [
         <GridActionsCellItem
           icon={<EditIcon />}
@@ -109,7 +177,7 @@ function OperacoesPanel() {
         <GridActionsCellItem
           icon={<DeleteIcon />}
           label="Excluir"
-          onClick={() => handleDeleteOperacao(params.id)}
+          onClick={() => handleDeleteDialogOpen(params.id)} // Abre o dialog
           key="delete"
         />,
       ],
@@ -121,17 +189,35 @@ function OperacoesPanel() {
       sx={{
         p: 1,
         maxWidth: 900,
-        height: 550,
+        height: 580,
         mx: "auto",
         bgcolor: "background.paper",
         borderRadius: 1,
         boxShadow: 0,
-        paddingBottom: 2,
+        paddingBottom: 1,
         paddingTop: 0,
-        gap: 10,
+        gap: 5,
       }}
     >
       <h2>Cadastro de Operações</h2>
+
+      {/* Snackbar para exibir alertas */}
+      <Snackbar
+        open={alert.open}
+        autoHideDuration={6000} // Tempo de exibição do alerta
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        onClose={() => setAlert({ ...alert, open: false })}
+      >
+        <Alert
+          severity={alert.severity}
+          onClose={() => setAlert({ ...alert, open: false })}
+        >
+          <AlertTitle>
+            {alert.severity === "success" ? "Sucesso" : "Erro"}
+          </AlertTitle>
+          {alert.message}
+        </Alert>
+      </Snackbar>
 
       <Box
         component="form"
@@ -139,7 +225,7 @@ function OperacoesPanel() {
           paddingBottom: 2,
           display: "flex",
           flexDirection: "column",
-          gap: "14px",
+          gap: "12px",
         }}
         onSubmit={(e) => {
           e.preventDefault();
@@ -148,40 +234,21 @@ function OperacoesPanel() {
       >
         <TextField
           label="N° da Operação"
-          name="numero_op"
-          value={formData.numero_op}
+          name="operationQuantity"
+          value={formData.operationQuantity}
           onChange={handleChange}
           required
           fullWidth
           size="small"
-          sx={{
-            "& .MuiInputBase-root": {
-              height: 36,
-              fontSize: "14px",
-            },
-            "& label": {
-              fontSize: "14px",
-            },
-          }}
         />
-
         <TextField
           label="Descrição da Operação"
-          name="descricao_op"
-          value={formData.descricao_op}
+          name="operationDescription"
+          value={formData.operationDescription}
           onChange={handleChange}
           required
           fullWidth
           size="small"
-          sx={{
-            "& .MuiInputBase-root": {
-              height: 36,
-              fontSize: "14px",
-            },
-            "& label": {
-              fontSize: "14px",
-            },
-          }}
         />
 
         <Button
@@ -192,7 +259,7 @@ function OperacoesPanel() {
             color: "#ffffff",
             padding: "6px 16px",
             borderRadius: "8px",
-            fontSize: "14px",
+            fontSize: "12px",
             textTransform: "none",
             "&:hover": {
               backgroundColor: "#bb0c0c",
@@ -229,6 +296,7 @@ function OperacoesPanel() {
         rows={operacoes}
         columns={columns}
         pageSizeOptions={[5, 10, 25]}
+        rowHeight={40}
         initialState={{
           pagination: { paginationModel: { pageSize: 10, page: 0 } },
         }}
@@ -237,7 +305,26 @@ function OperacoesPanel() {
         localeText={{
           noRowsLabel: "Nenhuma operação cadastrada.",
         }}
+        sx={{
+          height: 450,
+        }}
       />
+
+      {/* Dialog de confirmação de exclusão */}
+      <Dialog open={openDialog} onClose={handleDeleteDialogClose}>
+        <DialogTitle>Confirmar Exclusão</DialogTitle>
+        <DialogContent>
+          <p>Você tem certeza que deseja excluir esta operação?</p>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteDialogClose} color="primary">
+            Cancelar
+          </Button>
+          <Button onClick={handleDelete} color="secondary">
+            Excluir
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

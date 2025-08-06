@@ -1,80 +1,80 @@
-// Services/QualityCertificateService.cs
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using backend.Data;
 using backend.Models;
-using System.Text.Json;
-using Microsoft.Data.SqlClient;
 
-
-namespace backend.Services
+public class QualityCertificateService
 {
-    public class QualityCertificateService
+    private readonly AppDbContext _context;
+
+    public QualityCertificateService(AppDbContext context)
     {
-        private readonly AppDbContext _context;
-        private readonly IConfiguration _configuration;
+        _context = context;
+    }
 
-        public QualityCertificateService(AppDbContext context, IConfiguration configuration)
+            // Gerar o próximo número de certificado sequencial por ano
+            public string GerarNumeroCertificado()
         {
-            _context = context;
-            _configuration = configuration;
-        }
+            var currentYear = DateTime.Now.Year;
 
-        public QualityCertificate Add(QualityCertificate cert)
-        {
-            DateTime now = DateTime.Now;
-            string anoAtual = now.Year.ToString().Substring(2); // Ex: "2025"
-            int proximoNumero = 1;
+            // Buscar todos os certificados do ano atual e ordenar pelo número do certificado
+            var certificadosDoAno = _context.QualityCertificates
+                .Where(c => c.Data.Year == currentYear)  // Comparação direta com a propriedade Data (tipo DateTime)
+                .OrderByDescending(c => c.NumeroCertificado)
+                .ToList();  // Executando a consulta no banco e trazendo os dados para a memória
 
-            var ultimoCert = _context.QualityCertificates
-                .AsEnumerable()
-                .Where(q => !string.IsNullOrEmpty(q.NumeroCertificado) && q.NumeroCertificado.EndsWith("-" + anoAtual))
-                .OrderByDescending(q => q.NumeroCertificado)
-                .FirstOrDefault();
+            int newNumber = 1; // Default para o primeiro número
 
-            if (ultimoCert != null)
+            if (certificadosDoAno.Any())
             {
-                var partes = ultimoCert.NumeroCertificado.Split('-');
-                if (partes.Length == 2 && int.TryParse(partes[0], out int numeroAnterior))
-                {
-                    proximoNumero = numeroAnterior + 1;
-                }
+                // Extrair o número sequencial do último certificado (ex: "002-25")
+                var lastCertificado = certificadosDoAno.FirstOrDefault();
+                var lastNumberPart = lastCertificado.NumeroCertificado.Split('-')[0];
+                newNumber = int.Parse(lastNumberPart) + 1;
             }
 
-            string novoNumero = proximoNumero.ToString("D3") + "-" + anoAtual;
-            cert.NumeroCertificado = novoNumero;
-            cert.Data = now.ToString("yyyy-MM-dd HH:mm:ss");
-            cert.CreateDate = now;
-
-            _context.QualityCertificates.Add(cert);
-            _context.SaveChanges();
-
-            return cert;
+            // Gerar o número do certificado no formato "000-YY" (ex: 003-25)
+            var formattedNumber = newNumber.ToString("D3");
+            return $"{formattedNumber}-{currentYear.ToString().Substring(2)}";
         }
 
-
-
-
-
-        public string GetLastCertNumber()
+            // Criar um novo certificado
+        public async Task<QualityCertificateModel> CreateCertificate(QualityCertificateModel model)
         {
-            string anoAtual = DateTime.Now.ToString("yy"); // ex: "25"
+            var certificate = new QualityCertificateModel
+            {
+                NumeroCertificado = model.NumeroCertificado,
+                Ordem = model.Ordem,
+                OC = model.OC,
+                Lote = model.Lote,
+                CodigoCliente = model.CodigoCliente,
+                PartNumber = model.PartNumber,
+                ValorPeca = model.ValorPeca,
+                AnalisePo = model.AnalisePo,
+                RevisaoDesenho = model.RevisaoDesenho,
+                Quantidade = model.Quantidade,
+                Decapagem = model.Decapagem,
+                SNDecapagem = model.SNDecapagem,
+                CDChamado = model.CDChamado,
+                Cliente = model.Cliente,
+                Fornecedor = model.Fornecedor,
+                RelatorioInspecao = model.RelatorioInspecao,
+                CertificadoMP = model.CertificadoMP,
+                Responsavel = model.Responsavel,
+                DesenhoLP = model.DesenhoLP,
+                Observacoes = model.Observacoes,
+                SNPeca = model.SNPeca,
+                TipoEnvio = model.TipoEnvio,
+                DescricaoOperacao = model.DescricaoOperacao,
+                Data = DateTime.Now // Salva como DateTime, sem formatação para string
+            };
 
-            // Trazer para memória os certificados que terminam com "-AA"
-            var certificadosAnoAtual = _context.QualityCertificates
-                .Where(q => !string.IsNullOrEmpty(q.NumeroCertificado) && q.NumeroCertificado.EndsWith("-" + anoAtual))
-                .AsEnumerable();  // força trazer para memória para LINQ to Objects
+            _context.QualityCertificates.Add(certificate);
+            await _context.SaveChangesAsync();
 
-            // Extrair o número antes do hífen e converter para int
-            var numeros = certificadosAnoAtual
-                .Select(q => {
-                    var partes = q.NumeroCertificado.Split('-');
-                    return int.TryParse(partes[0], out int n) ? n : 0;
-                });
-
-            int ultimoNumero = numeros.Any() ? numeros.Max() : 0;
-            int proximoNumero = ultimoNumero + 1;
-
-            string numeroFormatado = $"{proximoNumero:D3}-{anoAtual}";
-            return numeroFormatado;
+            return model;
         }
-    }
+
 }

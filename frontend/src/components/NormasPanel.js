@@ -1,4 +1,13 @@
 import React, { useEffect, useState } from "react";
+import {
+  Snackbar,
+  Alert,
+  AlertTitle,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+} from "@mui/material";
 import axios from "axios";
 import { DataGrid, GridActionsCellItem } from "@mui/x-data-grid";
 import { Box, Button, TextField } from "@mui/material";
@@ -11,21 +20,35 @@ function NormasPanel() {
   const [formData, setFormData] = useState({
     id: 0,
     partNumber: "",
-    normaNome: "",
-    requisito: "",
-    revisao: "",
+    technicalStandard: "",
+    requirement: "",
+    revision: "",
+    createDate: "",
   });
 
-  const API_URL = "/api/normas";
+  const [alert, setAlert] = useState({
+    open: false,
+    message: "",
+    severity: "", // 'success', 'error', etc.
+  });
 
-  // Busca normas
+  // Dialog state for confirmation of deletion
+  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedNormId, setSelectedNormId] = useState(null);
+
+  const API_URL = "http://localhost:7105/api/norma";
+
   const fetchNormas = async () => {
     try {
       const res = await axios.get(`${API_URL}/todas`);
       setNormas(res.data);
     } catch (err) {
       console.error(err);
-      alert("Erro ao carregar normas.");
+      setAlert({
+        open: true,
+        message: "Erro ao carregar normas.",
+        severity: "error",
+      });
     }
   };
 
@@ -42,22 +65,35 @@ function NormasPanel() {
     try {
       if (isEditing) {
         await axios.put(API_URL, formData);
-        alert("Norma atualizada com sucesso.");
+        setAlert({
+          open: true,
+          message: "Norma atualizada com sucesso.",
+          severity: "success",
+        });
       } else {
         await axios.post(API_URL, formData);
-        alert("Norma salva com sucesso.");
+        setAlert({
+          open: true,
+          message: "Norma salva com sucesso.",
+          severity: "success",
+        });
       }
       setFormData({
         id: 0,
         partNumber: "",
-        normaNome: "",
-        requisito: "",
-        revisao: "",
+        technicalStandard: "",
+        requirement: "",
+        revision: "",
+        createDate: "",
       });
       setIsEditing(false);
       fetchNormas();
     } catch {
-      alert("Erro ao salvar norma.");
+      setAlert({
+        open: true,
+        message: "Erro ao salvar norma.",
+        severity: "error",
+      });
     }
   };
 
@@ -65,9 +101,10 @@ function NormasPanel() {
     setFormData({
       id: 0,
       partNumber: "",
-      normaNome: "",
-      requisito: "",
-      revisao: "",
+      technicalStandard: "",
+      requirement: "",
+      revision: "",
+      createDate: "",
     });
     setIsEditing(false);
   };
@@ -76,37 +113,68 @@ function NormasPanel() {
     setFormData({
       id: norma.id,
       partNumber: norma.partNumber,
-      normaNome: norma.normaNome,
-      requisito: norma.requisito || "",
-      revisao: norma.revisao || "",
+      technicalStandard: norma.technicalStandard,
+      requirement: norma.requirement,
+      revision: norma.revision,
+      createDate: norma.createDate,
     });
     setIsEditing(true);
   };
 
-  const handleDeleteNorma = async (id) => {
-    if (!window.confirm("Tem certeza que deseja excluir esta norma?")) return;
+  // Open confirmation dialog for deletion
+  const handleDeleteDialogOpen = (id) => {
+    setSelectedNormId(id);
+    setOpenDialog(true);
+  };
+
+  // Close the confirmation dialog
+  const handleDeleteDialogClose = () => {
+    setOpenDialog(false);
+    setSelectedNormId(null);
+  };
+
+  const handleDelete = async () => {
+    if (selectedNormId === null) return;
+
     try {
-      await axios.delete(`${API_URL}/${id}`);
-      alert("Norma excluída com sucesso.");
+      const response = await axios.delete(`${API_URL}/${selectedNormId}`);
+      setAlert({
+        open: true,
+        message: response.data.message || "Norma excluída com sucesso.",
+        severity: "success",
+      });
       fetchNormas();
+      setOpenDialog(false); // Close the dialog after deletion
     } catch {
-      alert("Erro ao excluir norma.");
+      setAlert({
+        open: true,
+        message: "Erro ao excluir norma.",
+        severity: "error",
+      });
     }
   };
 
-  // Colunas DataGrid
   const columns = [
     { field: "partNumber", headerName: "Part Number", flex: 1, minWidth: 120 },
-    { field: "normaNome", headerName: "Norma", flex: 1, minWidth: 150 },
-    { field: "requisito", headerName: "Requisito", flex: 1, minWidth: 150 },
-    { field: "revisao", headerName: "Revisão", width: 100 },
+    { field: "technicalStandard", headerName: "Norma", flex: 1, minWidth: 150 },
     {
-      field: "createDate",
-      headerName: "Criado em",
-      width: 120,
-      valueFormatter: ({ value }) =>
-        value ? new Date(value).toLocaleDateString() : "",
+      field: "requirement",
+      headerName: "Requisito",
+      flex: 1,
+      maxwidth: 150,
+      minWidth: 150,
+      renderCell: (params) => (
+        <div
+          style={{
+            whiteSpace: "normal", // Permite que o texto quebre em várias linhas
+            overflowWrap: "break-word", // Garante que palavras muito longas quebrem
+          }}
+        >
+          {params.value}
+        </div>
+      ),
     },
+    { field: "revision", headerName: "Revisão" },
     {
       field: "actions",
       headerName: "Ações",
@@ -117,14 +185,12 @@ function NormasPanel() {
           icon={<EditIcon />}
           label="Editar"
           onClick={() => handleEditNorma(params.row)}
-          showInMenu={false}
           key="edit"
         />,
         <GridActionsCellItem
           icon={<DeleteIcon />}
           label="Excluir"
-          onClick={() => handleDeleteNorma(params.id)}
-          showInMenu={false}
+          onClick={() => handleDeleteDialogOpen(params.id)} // Abre o dialog
           key="delete"
         />,
       ],
@@ -167,66 +233,66 @@ function NormasPanel() {
           onChange={handleChange}
           required
           fullWidth
-          size="small" // deixa o campo com altura menor
+          size="small"
           sx={{
             "& .MuiInputBase-root": {
-              height: 36, // altura customizada
-              fontSize: "14px", // tamanho da fonte dentro
+              height: 36,
+              fontSize: "14px",
             },
             "& label": {
-              fontSize: "14px", // tamanho da label
+              fontSize: "14px",
             },
           }}
         />
         <TextField
           label="Norma"
-          name="normaNome"
-          value={formData.normaNome}
+          name="technicalStandard"
+          value={formData.technicalStandard}
           onChange={handleChange}
           required
           fullWidth
-          size="small" // deixa o campo com altura menor
+          size="small"
           sx={{
             "& .MuiInputBase-root": {
-              height: 36, // altura customizada
-              fontSize: "14px", // tamanho da fonte dentro
+              height: 36,
+              fontSize: "14px",
             },
             "& label": {
-              fontSize: "14px", // tamanho da label
+              fontSize: "14px",
             },
           }}
         />
         <TextField
           label="Requisito"
-          name="requisito"
-          value={formData.requisito}
+          name="requirement"
+          value={formData.requirement}
           onChange={handleChange}
           fullWidth
-          size="small" // deixa o campo com altura menor
+          size="small"
           sx={{
             "& .MuiInputBase-root": {
-              height: 36, // altura customizada
-              fontSize: "14px", // tamanho da fonte dentro
+              height: 36,
+              fontSize: "14px",
             },
             "& label": {
-              fontSize: "14px", // tamanho da label
+              fontSize: "14px",
             },
           }}
         />
         <TextField
           label="Revisão"
-          name="revisao"
-          value={formData.revisao}
+          name="revision"
+          value={formData.revision}
           onChange={handleChange}
           fullWidth
-          size="small" // deixa o campo com altura menor
+          size="small"
           sx={{
             "& .MuiInputBase-root": {
-              height: 36, // altura customizada
-              fontSize: "14px", // tamanho da fonte dentro
+              height: 36,
+              fontSize: "14px",
             },
             "& label": {
-              fontSize: "14px", // tamanho da label
+              fontSize: "14px",
             },
           }}
         />
@@ -240,7 +306,7 @@ function NormasPanel() {
             padding: "6px 16px",
             borderRadius: "8px",
             fontSize: "14px",
-            textTransform: "none", // remove o CAPSLOCK padrão
+            textTransform: "none",
             "&:hover": {
               backgroundColor: "#bb0c0c",
             },
@@ -260,7 +326,7 @@ function NormasPanel() {
               borderRadius: "8px",
               border: "none",
               fontSize: "14px",
-              textTransform: "none", // remove o CAPSLOCK padrão
+              textTransform: "none",
               "&:hover": {
                 backgroundColor: "#5f5f5fff",
               },
@@ -275,6 +341,7 @@ function NormasPanel() {
         rows={normas}
         columns={columns}
         pageSizeOptions={[5, 10, 25]}
+        rowHeight={40}
         initialState={{
           pagination: { paginationModel: { pageSize: 10, page: 0 } },
         }}
@@ -283,7 +350,44 @@ function NormasPanel() {
         localeText={{
           noRowsLabel: "Nenhuma norma cadastrada.",
         }}
+        sx={{
+          height: 450,
+        }}
       />
+
+      {/* Snackbar para exibir alertas */}
+      <Snackbar
+        open={alert.open}
+        autoHideDuration={6000} // Tempo de exibição do alerta
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        onClose={() => setAlert({ ...alert, open: false })}
+      >
+        <Alert
+          severity={alert.severity}
+          onClose={() => setAlert({ ...alert, open: false })}
+        >
+          <AlertTitle>
+            {alert.severity === "success" ? "Sucesso" : "Erro"}
+          </AlertTitle>
+          {alert.message}
+        </Alert>
+      </Snackbar>
+
+      {/* Dialog de confirmação de exclusão */}
+      <Dialog open={openDialog} onClose={handleDeleteDialogClose}>
+        <DialogTitle>Confirmar Exclusão</DialogTitle>
+        <DialogContent>
+          <p>Você tem certeza que deseja excluir esta norma?</p>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteDialogClose} color="primary">
+            Cancelar
+          </Button>
+          <Button onClick={handleDelete} color="secondary">
+            Excluir
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

@@ -7,9 +7,10 @@ namespace backend.Data
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-        public DbSet<QualityCertificate> QualityCertificates { get; set; }
-        public DbSet<Operacao> Operacoes { get; set; }
-        public DbSet<ClienteModel> Cliente { get; set; }
+        public DbSet<QualityCertificateModel> QualityCertificates { get; set; }
+        public DbSet<OperationProcessModel> Operacao { get; set; }  // Tabela Operacao          public DbSet<ClienteModel> Cliente { get; set; }
+        public DbSet<ClienteModel> Cliente { get; set; }    // Tabela Cliente
+        public DbSet<NormaModel> TechnicalStandards { get; set; }
 
     }
 }
