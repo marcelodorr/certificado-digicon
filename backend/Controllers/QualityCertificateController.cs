@@ -25,12 +25,23 @@ public class QualityCertificateController : ControllerBase
     {
         if (model == null) return BadRequest("Dados inválidos.");
 
+        // Verificar se a data está correta
+        if (!DateTime.TryParse(model.Data.ToString(), out DateTime validDate))
+        {
+            validDate = DateTime.Now;  // Caso a data seja inválida, utiliza a data atual
+        }
+
+        model.Data = validDate;  // Atribui a data validada ao modelo
+
         // Gerar o número de certificado antes de salvar
         model.NumeroCertificado = _service.GerarNumeroCertificado();
 
         var createdCertificate = await _service.CreateCertificate(model);
         return Ok(createdCertificate);
     }
+
+
+
 
 
 

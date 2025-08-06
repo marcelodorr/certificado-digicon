@@ -1,3 +1,7 @@
+using System;
+using Newtonsoft.Json;
+using System.ComponentModel.DataAnnotations;
+
 public class QualityCertificateModel
 {
     public int Id { get; set; }
@@ -25,5 +29,7 @@ public class QualityCertificateModel
     public string TipoEnvio { get; set; }
     public string DescricaoOperacao { get; set; }
 
-    public DateTime Data { get; set; } = DateTime.Now;// Deve ser DateTime, não string
+    [Required]
+    [JsonConverter(typeof(Newtonsoft.Json.Converters.IsoDateTimeConverter))] 
+    public DateTime Data { get; set; } = DateTime.Now;
 }

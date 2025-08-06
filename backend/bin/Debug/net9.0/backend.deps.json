@@ -18,6 +18,7 @@
           "Microsoft.EntityFrameworkCore.Design": "9.0.7",
           "Microsoft.EntityFrameworkCore.SqlServer": "9.0.7",
           "Microsoft.EntityFrameworkCore.Tools": "9.0.7",
+          "Newtonsoft.Json": "13.0.3",
           "Swashbuckle.AspNetCore": "9.0.3",
           "System.Data.SqlClient": "4.9.0",
           "System.Text.Json": "9.0.7"

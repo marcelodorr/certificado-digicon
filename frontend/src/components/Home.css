@@ -1,255 +1,144 @@
-.app-container-intern {
+/* Container geral */
+.module-container {
   display: flex;
   flex-direction: column;
-  background-color: #ffffff;
   height: 100%;
-  box-sizing: border-box;
-  font-family: "Roboto", sans-serif;
+  background-color: #fafafa;
 }
 
-.page-header {
+/* Cabeçalho do módulo */
+.module-header {
   background-color: #f2f2f2;
-  height: 30px;
-  font-weight: bold;
-  font-size: 18px;
-  border-bottom: 1px solid #d9d9d9;
+  padding: 16px;
   display: flex;
-  justify-content: space-between;
-}
-
-.certificate-info {
-  display: flex;
-  gap: 10px;
   align-items: center;
   flex-wrap: wrap;
+  gap: 16px;
+  border-bottom: 1px solid #ddd;
 }
 
-.certificate-info label {
-  font-weight: 600;
+/* Agrupamento de campos no header */
+.form-header-fields {
+  display: grid;
+  grid-template-columns: auto auto auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
 }
 
-.certificate-info input,
-.certificate-info select {
-  height: 24px;
-  padding: 6px 10px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 14px;
+/* Grupo de botões no header */
+.button-group {
+  display: flex;
+  gap: 8px;
 }
 
-.fiori-save-button {
-  height: 36px;
+/* Estilo padrão para todos os botões MUI */
+.MuiButton-root {
+  text-transform: none;
+  font-size: 0.875rem;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+}
+
+/* Contained Primary: estados padrão, hover, active, focus */
+.MuiButton-containedPrimary {
   background-color: #a81818;
   color: white;
-  padding: 10px 12px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: bold;
-  margin-left: auto; /* empurra para a direita em flex container */
-  display: block; /* ou inline-block */
+}
+.MuiButton-containedPrimary:hover {
+  background-color: #b71c1c;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+.MuiButton-containedPrimary:active {
+  background-color: #991616;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+.MuiButton-containedPrimary:focus-visible {
+  outline: 2px solid rgba(168, 24, 24, 0.5);
 }
 
-.fiori-save-option {
-  height: 36px;
-  background-color: #636363ff;
-  color: white;
-  padding: 10px 12px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: bold;
-  margin-left: auto;
-  display: flex; /* para alinhar texto e ícone */
-  align-items: center;
-  gap: 6px; /* espaçamento entre ícone e texto */
+/* Outlined Primary: estados padrão, hover, active, focus */
+.MuiButton-outlinedPrimary {
+  border-color: #a81818;
+  color: #a81818;
+}
+.MuiButton-outlinedPrimary:hover {
+  background-color: rgba(168, 24, 24, 0.08);
+  border-color: #b71c1c;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.MuiButton-outlinedPrimary:active {
+  background-color: rgba(153, 22, 22, 0.12);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+.MuiButton-outlinedPrimary:focus-visible {
+  outline: 2px solid rgba(168, 24, 24, 0.5);
 }
 
-.fiori-save-button:hover {
-  background-color: #8f1818ff;
+/* StartIcon variant (Alterar Caminho): usa outlined secondary style */
+.MuiButton-startIcon.MuiButton-outlinedSecondary {
+  border-color: #636363;
+  color: #636363;
+}
+.MuiButton-startIcon.MuiButton-outlinedSecondary:hover {
+  background-color: rgba(99, 99, 99, 0.08);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.main-content {
-  background-color: #fff;
-  margin-bottom: 80px;
-  margin-left: 5px;
-}
-
-.fiori-form {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 12px;
-  padding-top: 10px;
-  padding-bottom: 10px;
-}
-
-.fiori-form label {
-  font-weight: 600;
-  font-size: 14px;
-  margin-bottom: 4px;
-  margin-left: 2px;
-  display: block;
-}
-
-.fiori-form input,
-.fiori-form select {
-  width: 100%;
-  height: 44px;
-  padding: 0 12px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 12px;
-  box-sizing: border-box;
-  background-color: #f0f0f0ff;
-  transition: border 0.2s ease-in-out;
-  pointer-events: none;
-  user-select: none;
-  cursor: default;
-}
-
-.fiori-form select:not(.fiori-form),
-.fiori-form input:not(.fiori-form-write) {
-  pointer-events: none;
-  user-select: none;
-  cursor: default;
-  background-color: #f0f0f0ff;
-}
-
-.fiori-form-write {
-  pointer-events: auto !important;
-  user-select: auto !important;
-  cursor: default !important;
-  background-color: #ffffff !important;
-  border: 1px solid #ccc !important;
-}
-
-.fiori-form input.fiori-form-write {
-  pointer-events: auto;
-  user-select: auto;
-  cursor: text;
+/* Área principal de conteúdo */
+.module-content {
+  padding: 16px;
   background-color: #ffffff;
+  flex: 1;
+  overflow-y: auto;
 }
 
-.fiori-form select:not(.fiori-form-write),
-.fiori-form input:not(.fiori-form-write) {
-  pointer-events: none;
-  user-select: none;
-  cursor: default;
-  background-color: #f0f0f0ff;
+/* Grid de formulários Fiori - 5 colunas */
+.fiori-form-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
 }
 
+/* Grid de formulário com textos largos (4 colunas) */
+.fiori-form-grid-4 {
+  display: grid;
+  grid-template-columns: 200px 1fr 1fr 1fr;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+/* Estilo para selects Fiori */
 .fiori-select .react-select__control {
-  height: 24px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  min-height: 32px;
+  font-size: 0.875rem;
+  border-radius: 2px;
+}
+
+/* Overrides do DataGrid */
+.MuiDataGrid-root {
   background-color: #fff;
-  font-size: 10px;
-  box-shadow: none;
-  transition: border 0.2s ease-in-out;
+  border: none;
+  margin-top: 16px;
 }
 
-.fiori-select .react-select__control--is-focused {
-  border-color: #a81818ff;
-  box-shadow: none;
-}
-
-.fiori-select .react-select__single-value {
-  color: #454545;
-  font-size: 12px;
-}
-
-.fiori-select .react-select__placeholder {
-  color: #888;
-  font-size: 12px;
-}
-
-.fiori-select .react-select__menu {
-  border-radius: 6px;
-  font-size: 12px;
-  z-index: 9999;
-}
-
-.fiori-select .react-select__option {
-  padding: 10px;
-  cursor: pointer;
-}
-
-.fiori-select .react-select__option--is-focused {
-  background-color: #e0e0e0;
-}
-
-.fiori-select .react-select__option--is-selected {
-  background-color: #a81818ff;
-  color: white;
-}
-
-.fiori-form input:focus,
-.fiori-form select:focus,
-.sn-decapagem-textarea:focus,
-.sn-decapagem-textarea-write:focus {
-  border-color: #a81818ff;
-  outline: none;
-}
-
-.normas-section {
-  margin-top: 2rem;
-}
-
-.sn-decapagem-textarea {
-  width: 100%;
-  min-height: 80px;
-  max-height: 80px;
-  max-width: 298px;
-  min-width: 298px;
-  padding: 8px 12px;
-  font-size: 14px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  box-sizing: border-box;
-  font-family: inherit;
-  outline: none;
-  background-color: #f0f0f0ff;
-  pointer-events: none;
-  user-select: none;
-  cursor: default;
-}
-
-.sn-decapagem-textarea-write {
+/* Input textfields padrão */
+.MuiTextField-root .MuiInputBase-input {
   background-color: #fff;
+  padding: 8px;
+  font-size: 0.875rem;
+}
+
+/* Bordas de campos MUI */
+.MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline {
+  border-color: #d9d9d9;
+}
+.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #a81818;
+}
+
+/* Ajuste de largura dos TextFields */
+.MuiTextField-root {
   width: 100%;
-  min-height: 80px;
-  max-height: 80px;
-  max-width: 298px;
-  min-width: 298px;
-  padding: 8px 12px;
-  font-size: 14px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  box-sizing: border-box;
-  font-family: inherit;
-  outline: none;
-}
-
-.data-grid MuiDataGrid-columnHeaders {
-  background-color: #a81818 !important;
-  color: #454545 !important;
-  font-weight: 700 !important;
-  font-family: "Roboto", sans-serif !important;
-  font-size: 16px !important;
-  min-height: 44px !important;
-  max-height: 44px !important;
-}
-
-.MuiDataGrid-columnHeaderTitle {
-  font-weight: 700 !important;
-  font-family: "Roboto", sans-serif !important;
-  font-size: 16px !important;
-  color: #454545 !important;
-}
-
-.MuiDataGrid-row {
-  font-family: "Roboto", sans-serif !important;
-  font-size: 14px !important;
-  min-height: 36px !important;
-  max-height: 36px !important;
 }
