@@ -154,11 +154,7 @@ function App() {
         {/* Dashboard */}
         {!moduloAberto && (
           <section className="dashboard-tiles">
-            {[
-              "Gerador de Certificado de Qualidade",
-              "HI-TECH-ATC",
-              "Importador de XML",
-            ].map((label, i) => (
+            {["Gerador de Certificado de Qualidade"].map((label, i) => (
               <div
                 key={i}
                 className="tile"
@@ -184,7 +180,7 @@ function App() {
               className="btn-back"
               aria-label="Voltar ao dashboard"
             >
-              ← Voltar
+              <span className="icon-back">←</span> Voltar
             </button>
             <Home />
           </div>
@@ -197,6 +193,13 @@ function App() {
             <br />
             <span>{horaAtual.toLocaleTimeString("pt-BR")}</span>
           </div>
+          <a
+            className="copy"
+            href="https://4growco.com/"
+            rel="noopener noreferrer"
+          >
+            &copy; 2025 4grow co Ltda.
+          </a>
         </footer>
       </main>
 

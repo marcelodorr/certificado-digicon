@@ -69,5 +69,19 @@ namespace backend.Controllers
 
             return Ok(new { success = true, message = "Norma excluída com sucesso!" });
         }
+
+        // Rota para obter normas por PartNumber
+        [HttpGet("partnumber/{partNumber}")]
+        public async Task<IActionResult> GetByPartNumber(string partNumber)
+        {
+            if (string.IsNullOrWhiteSpace(partNumber))
+                return BadRequest("PartNumber é obrigatório.");
+
+            var normas = await _normaService.GetNormasByPartNumberAsync(partNumber);
+            if (normas == null || normas.Count == 0)
+                return NotFound(new { success = false, message = "Nenhuma norma encontrada para este PartNumber." });
+
+            return Ok(normas);
+        }
     }
 }

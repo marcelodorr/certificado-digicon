@@ -37,6 +37,13 @@ namespace backend.Services
                 .ToListAsync();
         }
 
+        public async Task<List<NormaModel>> GetNormasByPartNumberAsync(string partNumber)
+        {
+            return await _context.TechnicalStandards
+                .Where(n => n.PartNumber == partNumber && !n.IsDeleted)
+                .ToListAsync();
+        }
+
         // Criar uma nova norma
         public async Task<NormaModel> CreateNormaAsync(NormaModel norma)
         {

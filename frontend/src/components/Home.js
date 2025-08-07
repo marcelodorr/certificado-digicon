@@ -13,29 +13,29 @@ import {
   DialogContent,
   DialogActions,
 } from "@mui/material";
-import "@fortawesome/fontawesome-free/css/all.min.css";
 
 function Home() {
   const [ordens, setOrdens] = useState([]);
+  const [operacoes, setOperacoes] = useState([]);
   const [normas, setNormas] = useState([]);
   const [dataAtual, setDataAtual] = useState("");
   const [numeroCertificado, setNumeroCertificado] = useState("");
   const [openDialog, setOpenDialog] = useState(false);
   const [certificadosExistentes, setCertificadosExistentes] = useState([]);
   const [certificadoSelecionado, setCertificadoSelecionado] = useState("");
+
   const [campos, setCampos] = useState({
     opEleb: "",
     poEleb: "",
-    loteEleb: "",
     codCliente: "",
     partNumber: "",
     valorPeca: "",
+    qtdSaldo: "",
     analisePo: "",
     revisaoDesenho: "",
-    qtdSaldo: "",
     decapagem: "",
     snDecapagem: "",
-    cdChamado: "",
+    snPeca: "",
     fornecedor: "",
     relatorioInspecao: "",
     certificadoMP: "",
@@ -43,115 +43,129 @@ function Home() {
     desenhoLP: "",
     observacoes: "",
     tipoEnvio: "",
-    snPeca: "",
+    cliente: "",
+    cd: "",
+    lote: "",
   });
 
-  // Gerar número e data
+  // Carregar certificado, data e ordens
   useEffect(() => {
     axios
-      .get("/api/QualityCertificate/novo-certificado")
+      .get("http://localhost:7105/api/QualityCertificate/novo-certificado")
       .then((res) => setNumeroCertificado(res.data.numero))
-      .catch((err) => console.error(err));
+      .catch(console.error);
     setDataAtual(new Date().toLocaleDateString("pt-BR"));
-  }, []);
-
-  // Buscar ordens finalizadas
-  useEffect(() => {
     axios
-      .get("/api/initial/ordens-finalizadas")
+      .get("http://localhost:7105/api/ControleEleb/ordens-finalizadas")
       .then((res) => setOrdens(res.data))
-      .catch((err) => console.error(err));
+      .catch(console.error);
+    axios
+      .get("http://localhost:7105/api/Operacao")
+      .then((res) => setOperacoes(res.data))
+      .catch(console.error);
   }, []);
 
-  // Buscar normas quando partNumber mudar
+  // Carregar normas por partNumber
   useEffect(() => {
     if (campos.partNumber) {
       axios
-        .get(`/api/Normas/partnumbers/${campos.partNumber}`)
+        .get(`http://localhost:7105/api/Norma/partnumber/${campos.partNumber}`)
         .then((res) => setNormas(res.data))
-        .catch((err) => console.error(err));
+        .catch((err) => {
+          if (err.response && err.response.status === 404) {
+            // Nenhuma norma encontrada: limpa lista e não exibe DataGrid
+            setNormas([]);
+          } else {
+            console.error(err);
+          }
+        });
     } else {
       setNormas([]);
     }
   }, [campos.partNumber]);
 
+  // Seleção de ordem
   const handleOpChange = (option) => {
-    const ordem = ordens.find((o) => o.ordem === option.value);
-    if (ordem) {
-      setCampos((prev) => ({
-        ...prev,
-        opEleb: ordem.ordem || "",
-        poEleb: ordem.oc || "",
-        loteEleb: ordem.lote || "",
-        codCliente: ordem.codigoCliente || "",
-        partNumber: ordem.pn || "",
-        valorPeca: ordem.valorPeca || "",
-        analisePo: ordem.analisePO || "",
-        revisaoDesenho: ordem.revisaoDesenho || "",
-        qtdSaldo: ordem.quantidade?.toString() || "",
-        decapagem: ordem.decapagem || "",
-        snDecapagem: ordem.sN_Decapagem || "",
-        cdChamado: ordem.cd || "",
-        fornecedor: prev.fornecedor,
-        relatorioInspecao: prev.relatorioInspecao,
-        certificadoMP: prev.certificadoMP,
-        responsavel: prev.responsavel,
-        desenhoLP: prev.desenhoLP,
-        observacoes: prev.observacoes,
-        snPeca: ordem.sn || "",
-      }));
-    }
+    const ordem = ordens.find((o) => o.opEleb === option.value);
+    if (!ordem) return;
+    setCampos({
+      opEleb: ordem.opEleb || "",
+      poEleb: ordem.poEleb || "",
+      codCliente: ordem.codEleb || "",
+      partNumber: ordem.partNumber || "",
+      valorPeca: ordem.valorPeca?.toString() || "",
+      qtdSaldo: ordem.qtdSaldo?.toString() || "",
+      analisePo: ordem.analisePo || "",
+      revisaoDesenho: ordem.revisaoDesenho || "",
+      decapagem: ordem.decapagem || "",
+      snDecapagem: ordem.snDecap || "",
+      snPeca: ordem.snPeca || "",
+      fornecedor: "Digicon",
+      relatorioInspecao: "N/A",
+      certificadoMP: "N/A",
+      responsavel: "Anderson Siegle Muller",
+      desenhoLP: "N/A",
+      observacoes: "N/A",
+      tipoEnvio: "",
+      cliente: ordem.cliente || "",
+      cd: ordem.cd || "",
+      lote: ordem.lote || "",
+    });
   };
 
+  // Atualizar campo
   const handleChangeCampo = (nome, valor) => {
     setCampos((prev) => ({ ...prev, [nome]: valor }));
   };
 
+  // Salvar certificado
   const handleSalvar = async () => {
+    const payload = {
+      NumeroCertificado: numeroCertificado,
+      Ordem: campos.opEleb,
+      OC: campos.poEleb,
+      CodigoCliente: campos.codCliente,
+      PartNumber: campos.partNumber,
+      ValorPeca: campos.valorPeca,
+      Quantidade: campos.qtdSaldo,
+      AnalisePo: campos.analisePo,
+      RevisaoDesenho: campos.revisaoDesenho,
+      Decapagem: campos.decapagem,
+      SNDecapagem: campos.snDecapagem,
+      SNPeca: campos.snPeca,
+      Fornecedor: campos.fornecedor,
+      RelatorioInspecao: campos.relatorioInspecao,
+      CertificadoMP: campos.certificadoMP,
+      Responsavel: campos.responsavel,
+      DesenhoLP: campos.desenhoLP,
+      Observacoes: campos.observacoes,
+      TipoEnvio: campos.tipoEnvio,
+      Data: dataAtual,
+      cliente: campos.cliente,
+      cd: campos.cd,
+      lote: campos.lote,
+    };
     try {
-      const payload = {
-        NumeroCertificado: numeroCertificado,
-        Ordem: campos.opEleb,
-        OC: campos.poEleb,
-        Lote: campos.loteEleb,
-        CodigoCliente: campos.codCliente,
-        PartNumber: campos.partNumber,
-        ValorPeca: campos.valorPeca,
-        AnalisePo: campos.analisePo,
-        RevisaoDesenho: campos.revisaoDesenho,
-        Quantidade: campos.qtdSaldo,
-        Decapagem: campos.decapagem,
-        SNDecapagem: campos.snDecapagem,
-        CDChamado: campos.cdChamado,
-        Fornecedor: campos.fornecedor,
-        RelatorioInspecao: campos.relatorioInspecao,
-        CertificadoMP: campos.certificadoMP,
-        Responsavel: campos.responsavel,
-        DesenhoLP: campos.desenhoLP,
-        Observacoes: campos.observacoes,
-        SNPeca: campos.snPeca,
-        TipoEnvio: campos.tipoEnvio,
-        Data: dataAtual,
-      };
-      await axios.post("/api/QualityCertificate", payload);
+      await axios.post("http://localhost:7105/api/QualityCertificate", payload);
       alert("Certificado salvo com sucesso!");
-    } catch (err) {
-      console.error(err);
+    } catch {
       alert("Erro ao salvar certificado.");
     }
   };
 
-  // DataGrid setup
+  // Configuração do DataGrid
   const columns = [
-    { field: "partNumber", headerName: "Part Number", flex: 1 },
-    { field: "norma", headerName: "Norma", flex: 1 },
-    { field: "revisao", headerName: "Revisão", flex: 0.5 },
+    { field: "partNumber", headerName: "PartNumber", flex: 1 },
+    { field: "technicalStandard", headerName: "TechnicalStandard", flex: 1 },
+    { field: "requirement", headerName: "Requirement", flex: 1 },
+    { field: "revision", headerName: "Revision", flex: 0.5 },
   ];
   const rows = normas.map((n, i) => ({
     id: i,
     partNumber: n.partNumber,
-    norma: n.norma,
-    revisao: n.revisao,
+    technicalStandard: n.technicalStandard,
+    requirement: n.requirement,
+    revision: n.revision,
   }));
 
   return (
@@ -167,7 +181,7 @@ function Home() {
           <Select
             className="fiori-select"
             classNamePrefix="react-select"
-            options={ordens.map((o) => ({ value: o.ordem, label: o.ordem }))}
+            options={ordens.map((o) => ({ value: o.opEleb, label: o.opEleb }))}
             onChange={handleOpChange}
             value={
               campos.opEleb
@@ -175,7 +189,21 @@ function Home() {
                 : null
             }
             placeholder="Ordem nº"
-            isSearchable
+            menuPortalTarget={document.body}
+            styles={{
+              control: (base) => ({ ...base, backgroundColor: "#fff" }),
+              menuPortal: (base) => ({
+                ...base,
+                zIndex: 9999,
+                backgroundColor: "#fff",
+              }),
+              menu: (base) => ({ ...base, backgroundColor: "#fff" }),
+              option: (base, state) => ({
+                ...base,
+                backgroundColor: state.isFocused ? "#f2f2f2" : "#fff",
+                color: "#333",
+              }),
+            }}
           />
           <TextField
             label="Data"
@@ -189,8 +217,8 @@ function Home() {
               onClick={handleSalvar}
               sx={{
                 backgroundColor: "#a81818",
-                color: "#ffffff",
                 "&:hover": { backgroundColor: "#b71c1c" },
+                color: "#fff",
                 textTransform: "none",
               }}
             >
@@ -201,11 +229,8 @@ function Home() {
               onClick={() => setOpenDialog(true)}
               sx={{
                 borderColor: "#a81818",
+                "&:hover": { backgroundColor: "rgba(168,24,24,0.08)" },
                 color: "#a81818",
-                "&:hover": {
-                  backgroundColor: "rgba(168,24,24,0.08)",
-                  borderColor: "#b71c1c",
-                },
                 textTransform: "none",
               }}
             >
@@ -216,11 +241,8 @@ function Home() {
               startIcon={<FolderIcon />}
               sx={{
                 borderColor: "#636363",
+                "&:hover": { backgroundColor: "rgba(99,99,99,0.08)" },
                 color: "#636363",
-                "&:hover": {
-                  backgroundColor: "rgba(99,99,99,0.08)",
-                  borderColor: "#636363",
-                },
                 textTransform: "none",
               }}
             >
@@ -229,88 +251,132 @@ function Home() {
           </Box>
         </Box>
       </header>
-
       <main className="module-content">
-        {/* Grid de campos principais */}
-        <Box className="fiori-form-grid">
+        <Box className="fiori-form-grid-4">
           <TextField
-            label="OC nº"
+            label="OC n°"
             value={campos.poEleb}
+            disabled="true"
             size="small"
             onChange={(e) => handleChangeCampo("poEleb", e.target.value)}
           />
           <TextField
-            label="Lote nº"
-            value={campos.loteEleb}
-            size="small"
-            onChange={(e) => handleChangeCampo("loteEleb", e.target.value)}
-          />
-          <TextField
-            label="Código Cliente"
+            label="Código Cliente n°"
             value={campos.codCliente}
+            disabled="true"
             size="small"
             onChange={(e) => handleChangeCampo("codCliente", e.target.value)}
           />
           <TextField
-            label="PN nº"
+            label="Part Number"
             value={campos.partNumber}
+            disabled="true"
             size="small"
             onChange={(e) => handleChangeCampo("partNumber", e.target.value)}
           />
           <TextField
-            label="Valor Peça"
+            label="Lote n°"
+            value={campos.lote}
+            disabled="true"
+            size="small"
+            onChange={(e) => handleChangeCampo("lote", e.target.value)}
+          />
+          <TextField
+            label="Quantidade"
+            value={campos.qtdSaldo}
+            disabled="true"
+            size="small"
+            onChange={(e) => handleChangeCampo("qtdSaldo", e.target.value)}
+          />
+          <TextField
+            label="Valor Produto"
             value={campos.valorPeca}
+            disabled="true"
             size="small"
             onChange={(e) => handleChangeCampo("valorPeca", e.target.value)}
           />
-        </Box>
-
-        <Box className="fiori-form-grid">
           <TextField
             label="Análise PO"
             value={campos.analisePo}
+            disabled="true"
             size="small"
             onChange={(e) => handleChangeCampo("analisePo", e.target.value)}
           />
           <TextField
-            label="Revisão Desenho"
+            label="Existe CD ou Chamado?"
+            value={campos.cd}
+            disabled="true"
+            size="small"
+            onChange={(e) => handleChangeCampo("cd", e.target.value)}
+          />
+          <TextField
+            label="Cliente"
+            value={campos.cliente}
+            disabled="true"
+            size="small"
+            onChange={(e) => handleChangeCampo("snPeca", e.target.value)}
+          />
+          <TextField
+            label="Desenho (2D/MBD) - Folha"
+            value={campos.RevisaoDesenho}
+            size="small"
+            required="true"
+            onChange={(e) =>
+              handleChangeCampo("RevisaoDesenho", e.target.value)
+            }
+          />
+          <TextField
+            label="Revisão"
             value={campos.revisaoDesenho}
             size="small"
+            required="true"
             onChange={(e) =>
               handleChangeCampo("revisaoDesenho", e.target.value)
             }
           />
           <TextField
-            label="Quantidade"
-            value={campos.qtdSaldo}
+            label="Desenho (LP) - Revisão"
+            value={campos.desenhoLP}
             size="small"
-            onChange={(e) => handleChangeCampo("qtdSaldo", e.target.value)}
+            required="true"
+            onChange={(e) => handleChangeCampo("desenhoLP", e.target.value)}
           />
           <TextField
-            label="Decapagem"
+            label="Decapagem Realizada?"
             value={campos.decapagem}
+            disabled="true"
             size="small"
             onChange={(e) => handleChangeCampo("decapagem", e.target.value)}
           />
           <TextField
-            label="Existe CD ou Chamado?"
-            value={campos.cdChamado}
+            label="Serial Decapagem"
+            value={campos.snDecapagem}
+            multiline
+            disabled="true"
+            rows={3}
             size="small"
-            onChange={(e) => handleChangeCampo("cdChamado", e.target.value)}
+            onChange={(e) => handleChangeCampo("snDecapagem", e.target.value)}
           />
-        </Box>
-
-        <Box className="fiori-form-grid">
+          <TextField
+            label="Serial Peça"
+            value={campos.snPeca}
+            multiline
+            rows={3}
+            size="small"
+            onChange={(e) => handleChangeCampo("snPeca", e.target.value)}
+          />
           <TextField
             label="Fornecedor"
             value={campos.fornecedor}
             size="small"
+            required="true"
             onChange={(e) => handleChangeCampo("fornecedor", e.target.value)}
           />
           <TextField
-            label="Relatório de Inspeção nº"
+            label="Relatório de Inspeção n°"
             value={campos.relatorioInspecao}
             size="small"
+            required="true"
             onChange={(e) =>
               handleChangeCampo("relatorioInspecao", e.target.value)
             }
@@ -319,29 +385,62 @@ function Home() {
             label="Certificado de Conformidade MP"
             value={campos.certificadoMP}
             size="small"
+            required="true"
             onChange={(e) => handleChangeCampo("certificadoMP", e.target.value)}
           />
           <TextField
-            label="Responsável"
+            label="Responsável Qualidade"
             value={campos.responsavel}
             size="small"
+            required="true"
             onChange={(e) => handleChangeCampo("responsavel", e.target.value)}
           />
-          <TextField
-            label="Desenho (LP) - Revisão"
-            value={campos.desenhoLP}
-            size="small"
-            onChange={(e) => handleChangeCampo("desenhoLP", e.target.value)}
-          />
         </Box>
-
-        <Box className="fiori-form-grid-4">
+        <Box className="fiori-form-grid-3">
+          <Select
+            className="fiori-select"
+            classNamePrefix="react-select"
+            options={operacoes.map((o) => ({
+              value: o.operationDescription,
+              label: o.operationDescription,
+            }))}
+            onChange={(opt) =>
+              handleChangeCampo("operacaoDescricao", opt?.value || "")
+            }
+            value={
+              campos.operacaoDescricao
+                ? {
+                    value: campos.operacaoDescricao,
+                    label: campos.operacaoDescricao,
+                  }
+                : null
+            }
+            placeholder="Operações Executadas"
+            isClearable
+            isSearchable
+            menuPortalTarget={document.body}
+            styles={{
+              control: (base) => ({
+                ...base,
+                backgroundColor: "#454545",
+                size: "small",
+                width: "100%",
+                required: "true",
+              }),
+              menuPortal: (base) => ({
+                ...base,
+                zIndex: 9999,
+                backgroundColor: "#454545",
+              }),
+            }}
+          />
           <Select
             className="fiori-select"
             classNamePrefix="react-select"
             options={[
-              { value: "Envio Padrão", label: "Envio Padrão" },
-              { value: "Expresso", label: "Expresso" },
+              { value: "Lote Completo", label: "Lote Completo" },
+              { value: "Lote Parcial", label: "Lote Parcial" },
+              { value: "Lote Complementar", label: "Lote Complementar" },
             ]}
             onChange={(opt) => handleChangeCampo("tipoEnvio", opt.value)}
             value={
@@ -351,43 +450,46 @@ function Home() {
             }
             placeholder="Tipo de Envio"
             isSearchable={false}
-          />
-          <TextField
-            label="SN Peça"
-            value={campos.snPeca}
-            multiline
-            rows={2}
-            size="small"
-            onChange={(e) => handleChangeCampo("snPeca", e.target.value)}
-          />
-          <TextField
-            label="SN Decapagem"
-            value={campos.snDecapagem}
-            multiline
-            rows={2}
-            size="small"
-            onChange={(e) => handleChangeCampo("snDecapagem", e.target.value)}
+            menuPortalTarget={document.body}
+            styles={{
+              control: (base) => ({ ...base, backgroundColor: "#fff" }),
+              menuPortal: (base) => ({
+                ...base,
+                zIndex: 9999,
+                backgroundColor: "#fff",
+                width: "100%",
+                required: "true",
+              }),
+              menu: (base) => ({ ...base, backgroundColor: "#fff" }),
+              option: (base, state) => ({
+                ...base,
+                backgroundColor: state.isFocused ? "#f2f2f2" : "#fff",
+                color: "##454545",
+              }),
+            }}
           />
           <TextField
             label="Observações"
             value={campos.observacoes}
             multiline
-            rows={2}
+            rows={3}
             size="small"
             onChange={(e) => handleChangeCampo("observacoes", e.target.value)}
           />
         </Box>
-
-        <Box style={{ height: 300, width: "100%" }}>
-          <DataGrid
-            rows={rows}
-            columns={columns}
-            pageSize={5}
-            rowsPerPageOptions={[5]}
-            disableSelectionOnClick
-          />
-        </Box>
-
+        {/* DataGrid condicional */}
+        {normas.length > 0 && (
+          <Box style={{ height: 300, width: "100%" }}>
+            <DataGrid
+              rows={rows}
+              columns={columns}
+              pageSize={5}
+              rowsPerPageOptions={[5]}
+              disableSelectionOnClick
+            />
+          </Box>
+        )}
+        {/* Dialog para gerar PDF */}
         <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
           <DialogTitle>Gerar Certificado PDF</DialogTitle>
           <DialogContent>
@@ -410,9 +512,14 @@ function Home() {
             <Button onClick={() => setOpenDialog(false)}>Cancelar</Button>
             <Button
               variant="contained"
-              color="primary"
               onClick={() => {
-                // lógica gerar PDF
+                /* gerar PDF */
+              }}
+              sx={{
+                backgroundColor: "#a81818",
+                color: "#fff",
+                "&:hover": { backgroundColor: "#b71c1c" },
+                textTransform: "none",
               }}
             >
               Gerar PDF

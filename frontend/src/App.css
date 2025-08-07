@@ -1,7 +1,7 @@
 ```css body {
   margin: 0;
   font-family: "Segoe UI", sans-serif;
-  background-color: #f5f6fa;
+  background-color: #ffffff;
   color: #333;
 }
 
@@ -9,6 +9,13 @@
   display: flex;
   height: 100vh;
   background-color: #ffffff;
+}
+
+.module-container {
+  display: flex;
+  background-color: #ffffff;
+  color: #ffffff;
+  align-items: left;
 }
 
 .app-container-intern {
@@ -137,7 +144,7 @@
 }
 
 .nav-subitem:hover {
-  background-color: #afafafff;
+  background-color: #ffffff;
   height: 100%;
   display: flex;
 }
@@ -172,7 +179,7 @@
 }
 
 .btn-logout {
-  background-color: #ffffffff;
+  background-color: #ffffff;
   color: #a81818ff;
   justify-content: center;
   align-items: center;
@@ -469,16 +476,24 @@ tbody tr:hover {
 }
 
 .btn-back {
-  margin-bottom: 15px;
+  width: 100px;
+  padding: 8px;
   background-color: transparent;
   border: none;
-  font-size: 1rem;
-  color: #c00000ff;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  font-size: 14px;
+  color: #c00000;
   cursor: pointer;
 }
 
 .btn-back:hover {
-  text-decoration: underline;
+  font-weight: bold;
+}
+
+.btn-back .icon-back {
+  margin-right: 6px;
 }
 
 .app-footer {
@@ -500,6 +515,15 @@ tbody tr:hover {
   font-size: 0.9rem;
   color: #555;
   user-select: none;
+}
+
+.copy {
+  font-size: 0.9rem;
+  color: #555;
+  user-select: none;
+  align-items: right;
+  margin-right: 10px;
+  text-decoration: none;
 }
 
 .footer-actions .btn-action {

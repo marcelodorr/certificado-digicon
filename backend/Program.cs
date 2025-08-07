@@ -1,3 +1,4 @@
+
 using backend.Data;
 using backend.Services;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +14,7 @@ builder.Services.AddScoped<QualityCertificateService>();
 builder.Services.AddScoped<OperacaoService>();
 builder.Services.AddScoped<NormaService>();
 builder.Services.AddScoped<ClienteService>();
+builder.Services.AddScoped<ControleElebService>();
 
 // Configuração do CORS - Permite requisições de qualquer origem
 builder.Services.AddCors(options =>

@@ -20,7 +20,7 @@
 /* Agrupamento de campos no header */
 .form-header-fields {
   display: grid;
-  grid-template-columns: auto auto auto 1fr auto;
+  grid-template-columns: auto 250px auto 1fr auto;
   align-items: center;
   gap: 12px;
   width: 100%;
@@ -103,17 +103,28 @@
 
 /* Grid de formulário com textos largos (4 colunas) */
 .fiori-form-grid-4 {
+  color: #454545;
   display: grid;
-  grid-template-columns: 200px 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
   gap: 12px;
-  margin-top: 16px;
+  margin-top: 12px;
 }
 
-/* Estilo para selects Fiori */
-.fiori-select .react-select__control {
-  min-height: 32px;
-  font-size: 0.875rem;
-  border-radius: 2px;
+/* Grid de formulário com textos largos (3 colunas) */
+.fiori-form-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+/* Grid de formulário com textos largos (1 colunas) */
+.fiori-form-grid-1 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  width: 20%;
+  margin-top: 10px;
 }
 
 /* Overrides do DataGrid */
@@ -135,10 +146,50 @@
   border-color: #d9d9d9;
 }
 .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
-  border-color: #a81818;
+  border-color: #a81818 !important;
+  title-color: #a81818 !important;
 }
 
 /* Ajuste de largura dos TextFields */
 .MuiTextField-root {
   width: 100%;
+}
+
+/* Control (campo fechado) */
+.fiori-select .react-select__control {
+  background-color: #ffffffff;
+}
+
+/* Placeholder / Input interno */
+.fiori-select .react-select__placeholder,
+.fiori-select .react-select__single-value {
+  color: #444;
+}
+
+/* Menu ao abrir */
+.fiori-select .react-select {
+  background-color: #850808ff;
+  size: small;
+}
+
+/* Menu ao abrir */
+.fiori-select .react-select__menu {
+  background-color: #850808ff;
+}
+
+/* Lista de opções */
+.fiori-select .react-select__menu-list {
+  background-color: #ffffffff !important;
+}
+
+/* Cada opção */
+.fiori-select .react-select__option {
+  background-color: #ffffffff !important;
+  color: #333;
+}
+
+/* Opção focada / selecionada */
+.fiori-select .react-select__option--is-focused,
+.fiori-select .react-select__option--is-selected {
+  background-color: #dbdbdb52 !important;
 }

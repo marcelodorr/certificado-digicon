@@ -11,6 +11,7 @@ namespace backend.Data
         public DbSet<OperationProcessModel> Operacao { get; set; }  // Tabela Operacao          public DbSet<ClienteModel> Cliente { get; set; }
         public DbSet<ClienteModel> Cliente { get; set; }    // Tabela Cliente
         public DbSet<NormaModel> TechnicalStandards { get; set; }
+        public DbSet<ControleEleb> ControleElebs { get; set; }
 
     }
 }
