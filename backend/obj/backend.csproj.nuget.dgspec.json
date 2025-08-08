@@ -109,6 +109,10 @@
             "System.Text.Json": {
               "target": "Package",
               "version": "[9.0.7, )"
+            },
+            "iTextSharp.LGPLv2.Core": {
+              "target": "Package",
+              "version": "[3.7.4, )"
             }
           },
           "imports": [

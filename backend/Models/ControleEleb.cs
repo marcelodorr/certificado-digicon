@@ -53,5 +53,7 @@ namespace backend.Models
         public string? Situacao { get; set; }
         [Column("Lote_ELEB")]
         public string? lote { get; set; }
+        [Column("Num_Certificado")]
+        public string NumCertificado { get; set; }
     }
 }

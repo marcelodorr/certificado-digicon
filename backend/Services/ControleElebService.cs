@@ -30,5 +30,23 @@ namespace backend.Services
                 .Where(c => c.Situacao == "Finalizado" && c.OpEleb == opEleb)
                 .FirstOrDefaultAsync();
         }
+
+        public async Task<bool> LiberarAsync(string opEleb, string numeroCertificado)
+        {
+            // Busca a OP
+            var ordem = await _context.ControleElebs
+                .FirstOrDefaultAsync(x => x.OpEleb == opEleb);
+
+            if (ordem == null) return false;
+
+            // Opcional: só permitir se estava 'Finalizado'
+            if (!string.Equals(ordem.Situacao, "Finalizado")) return false;
+
+            ordem.Situacao = "Liberado";
+            ordem.NumCertificado = numeroCertificado;
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
 }

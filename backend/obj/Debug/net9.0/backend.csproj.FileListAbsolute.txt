@@ -185,3 +185,10 @@ D:\certificado-digicon\backend\obj\Debug\net9.0\refint\backend.dll
 D:\certificado-digicon\backend\obj\Debug\net9.0\backend.pdb
 D:\certificado-digicon\backend\obj\Debug\net9.0\backend.genruntimeconfig.cache
 D:\certificado-digicon\backend\obj\Debug\net9.0\ref\backend.dll
+D:\certificado-digicon\backend\bin\Debug\net9.0\BouncyCastle.Cryptography.dll
+D:\certificado-digicon\backend\bin\Debug\net9.0\iTextSharp.LGPLv2.Core.dll
+D:\certificado-digicon\backend\bin\Debug\net9.0\SkiaSharp.dll
+D:\certificado-digicon\backend\bin\Debug\net9.0\runtimes\osx\native\libSkiaSharp.dylib
+D:\certificado-digicon\backend\bin\Debug\net9.0\runtimes\win-arm64\native\libSkiaSharp.dll
+D:\certificado-digicon\backend\bin\Debug\net9.0\runtimes\win-x64\native\libSkiaSharp.dll
+D:\certificado-digicon\backend\bin\Debug\net9.0\runtimes\win-x86\native\libSkiaSharp.dll

@@ -12,7 +12,16 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Snackbar,
+  Alert,
+  AlertTitle,
+  Slide,
 } from "@mui/material";
+
+function TransitionRight(props) {
+  // entra pela direita -> direction "left"
+  return <Slide {...props} direction="left" />;
+}
 
 function Home() {
   const [ordens, setOrdens] = useState([]);
@@ -20,11 +29,50 @@ function Home() {
   const [normas, setNormas] = useState([]);
   const [dataAtual, setDataAtual] = useState("");
   const [numeroCertificado, setNumeroCertificado] = useState("");
-  const [openDialog, setOpenDialog] = useState(false);
+
+  // Dialogs
+  const [openDialogPDF, setOpenDialogPDF] = useState(false);
+  const [openDialogPath, setOpenDialogPath] = useState(false);
+
   const [certificadosExistentes, setCertificadosExistentes] = useState([]);
   const [certificadoSelecionado, setCertificadoSelecionado] = useState("");
+  const [novoCaminhoPDF, setNovoCaminhoPDF] = useState("");
 
-  const [campos, setCampos] = useState({
+  // Snackbar/Alert
+  const [toast, setToast] = useState({
+    open: false,
+    severity: "info", // "success" | "info" | "warning" | "error"
+    title: "",
+    message: "",
+  });
+
+  const handleOpenDialogPDF = async () => {
+    try {
+      const { data } = await axios.get(
+        "http://localhost:7105/api/QualityCertificate/lista"
+      );
+      setCertificadosExistentes(Array.isArray(data) ? data : []);
+      if (!data || data.length === 0) {
+        openToast("info", "Sem certificados", "Não há certificados salvos.");
+      }
+    } catch (err) {
+      openToast(
+        "error",
+        "Erro ao buscar certificados",
+        err?.response?.data?.message || err.message
+      );
+      setCertificadosExistentes([]);
+    } finally {
+      setOpenDialogPDF(true);
+    }
+  };
+
+  const openToast = (severity, title, message) =>
+    setToast({ open: true, severity, title, message });
+  const closeToast = () => setToast((t) => ({ ...t, open: false }));
+
+  // fora do componente OU antes do useState
+  const initialCampos = () => ({
     opEleb: "",
     poEleb: "",
     codCliente: "",
@@ -36,6 +84,7 @@ function Home() {
     decapagem: "",
     snDecapagem: "",
     snPeca: "",
+    operacaoDescricao: "",
     fornecedor: "",
     relatorioInspecao: "",
     certificadoMP: "",
@@ -48,21 +97,86 @@ function Home() {
     lote: "",
   });
 
+  const [campos, setCampos] = useState(initialCampos());
+
+  const resetForm = async () => {
+    setCampos(initialCampos()); // limpa todos os campos
+    setNormas([]); // limpa grid
+    setCertificadoSelecionado("");
+    setOpenDialogPDF(false);
+  };
+
+  const selectStyles = {
+    control: (base, state) => ({
+      ...base,
+      backgroundColor: "#fff",
+      borderColor: state.isFocused ? "#a81818" : "#d9d9d9",
+      boxShadow: "none",
+      ":hover": { borderColor: state.isFocused ? "#a81818" : "#d9d9d9" },
+      minHeight: 40,
+    }),
+    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+    menu: (base) => ({ ...base, backgroundColor: "#fff" }),
+    option: (base, state) => ({
+      ...base,
+      backgroundColor: state.isSelected
+        ? "#eaeaea"
+        : state.isFocused
+        ? "#f2f2f2"
+        : "#fff",
+      color: "#333",
+    }),
+  };
+
+  const selectTheme = (theme) => ({
+    ...theme,
+    colors: {
+      ...theme.colors,
+      primary: "#a81818",
+      primary75: "#a81818",
+      primary50: "#e8c7c7",
+      primary25: "#f2f2f2",
+      neutral20: "#d9d9d9",
+      neutral30: "#a81818",
+    },
+  });
+
   // Carregar certificado, data e ordens
   useEffect(() => {
     axios
       .get("http://localhost:7105/api/QualityCertificate/novo-certificado")
       .then((res) => setNumeroCertificado(res.data.numero))
-      .catch(console.error);
+      .catch((err) =>
+        openToast(
+          "error",
+          "Falha ao obter número",
+          err?.response?.data?.message || err.message
+        )
+      );
+
     setDataAtual(new Date().toLocaleDateString("pt-BR"));
+
     axios
       .get("http://localhost:7105/api/ControleEleb/ordens-finalizadas")
       .then((res) => setOrdens(res.data))
-      .catch(console.error);
+      .catch((err) =>
+        openToast(
+          "error",
+          "Erro ao carregar ordens",
+          err?.response?.data?.message || err.message
+        )
+      );
+
     axios
       .get("http://localhost:7105/api/Operacao")
       .then((res) => setOperacoes(res.data))
-      .catch(console.error);
+      .catch((err) =>
+        openToast(
+          "error",
+          "Erro ao carregar operações",
+          err?.response?.data?.message || err.message
+        )
+      );
   }, []);
 
   // Carregar normas por partNumber
@@ -73,10 +187,13 @@ function Home() {
         .then((res) => setNormas(res.data))
         .catch((err) => {
           if (err.response && err.response.status === 404) {
-            // Nenhuma norma encontrada: limpa lista e não exibe DataGrid
-            setNormas([]);
+            setNormas([]); // sem normas
           } else {
-            console.error(err);
+            openToast(
+              "error",
+              "Erro ao carregar normas",
+              err?.response?.data?.message || err.message
+            );
           }
         });
     } else {
@@ -86,20 +203,20 @@ function Home() {
 
   // Seleção de ordem
   const handleOpChange = (option) => {
-    const ordem = ordens.find((o) => o.opEleb === option.value);
+    const ordem = ordens.find((o) => o.opEleb === option?.value);
     if (!ordem) return;
     setCampos({
-      opEleb: ordem.opEleb || "",
-      poEleb: ordem.poEleb || "",
-      codCliente: ordem.codEleb || "",
-      partNumber: ordem.partNumber || "",
-      valorPeca: ordem.valorPeca?.toString() || "",
-      qtdSaldo: ordem.qtdSaldo?.toString() || "",
-      analisePo: ordem.analisePo || "",
-      revisaoDesenho: ordem.revisaoDesenho || "",
-      decapagem: ordem.decapagem || "",
-      snDecapagem: ordem.snDecap || "",
-      snPeca: ordem.snPeca || "",
+      opEleb: ordem.opEleb || "N/A",
+      poEleb: ordem.poEleb || "N/A",
+      codCliente: ordem.codEleb || "N/A",
+      partNumber: ordem.partNumber || "N/A",
+      valorPeca: ordem.valorPeca?.toString() || "N/A",
+      qtdSaldo: ordem.qtdSaldo?.toString() || "N/A",
+      analisePo: ordem.analisePo || "N/A",
+      revisaoDesenho: ordem.revisaoDesenho || "N/A",
+      decapagem: ordem.decapagem || "N/A",
+      snDecapagem: ordem.snDecap || "N/A",
+      snPeca: ordem.snPeca || "N/A",
       fornecedor: "Digicon",
       relatorioInspecao: "N/A",
       certificadoMP: "N/A",
@@ -107,9 +224,10 @@ function Home() {
       desenhoLP: "N/A",
       observacoes: "N/A",
       tipoEnvio: "",
-      cliente: ordem.cliente || "",
-      cd: ordem.cd || "",
-      lote: ordem.lote || "",
+      cliente: ordem.cliente || "N/A",
+      cd: ordem.cd || "N/A",
+      lote: ordem.lote || "N/A",
+      operacaoDescricao: "",
     });
   };
 
@@ -144,12 +262,54 @@ function Home() {
       cliente: campos.cliente,
       cd: campos.cd,
       lote: campos.lote,
+      operacaoDescricao: "",
+      CDChamado: campos.cd || "N/A",
+      DescricaoOperacao: campos.operacaoDescricao || "N/A",
     };
+
+    if (!payload.CDChamado || !payload.DescricaoOperacao) {
+      openToast(
+        "warning",
+        "Campos obrigatórios",
+        "Preencha o CD/Chamado e a Descrição da Operação."
+      );
+      return;
+    }
+
     try {
       await axios.post("http://localhost:7105/api/QualityCertificate", payload);
-      alert("Certificado salvo com sucesso!");
-    } catch {
-      alert("Erro ao salvar certificado.");
+      await axios.put("http://localhost:7105/api/ControleEleb/liberar", {
+        opEleb: campos.opEleb,
+        numeroCertificado: numeroCertificado,
+      });
+
+      openToast(
+        "success",
+        "Certificado salvo",
+        "O certificado foi salvo e a OP liberada com sucesso."
+      );
+
+      // novo número
+      axios
+        .get("http://localhost:7105/api/QualityCertificate/novo-certificado")
+        .then((res) => setNumeroCertificado(res.data.numero))
+        .catch((err) =>
+          openToast(
+            "error",
+            "Falha ao obter novo número",
+            err?.response?.data?.message || err.message
+          )
+        );
+
+      setDataAtual(new Date().toLocaleDateString("pt-BR"));
+      setOrdens((prev) => prev.filter((o) => o.opEleb !== campos.opEleb));
+      await resetForm();
+    } catch (err) {
+      openToast(
+        "error",
+        "Erro ao salvar",
+        err?.response?.data?.message || "Não foi possível salvar o certificado."
+      );
     }
   };
 
@@ -170,12 +330,32 @@ function Home() {
 
   return (
     <div className="module-container">
+      {/* SNACKBAR / ALERT (top-right) */}
+      <Snackbar
+        open={toast.open}
+        autoHideDuration={4500}
+        onClose={closeToast}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        TransitionComponent={TransitionRight}
+      >
+        <Alert
+          onClose={closeToast}
+          severity={toast.severity}
+          variant="filled"
+          sx={{ width: "100%", minWidth: 360 }}
+        >
+          {toast.title ? <AlertTitle>{toast.title}</AlertTitle> : null}
+          {toast.message}
+        </Alert>
+      </Snackbar>
+
       <header className="module-header">
         <Box className="form-header-fields">
           <TextField
             label="Nº Certificado"
             value={numeroCertificado}
             size="small"
+            disabled
             InputProps={{ readOnly: true }}
           />
           <Select
@@ -195,13 +375,13 @@ function Home() {
               menuPortal: (base) => ({
                 ...base,
                 zIndex: 9999,
-                backgroundColor: "#fff",
+                backgroundColor: "#ffffff",
               }),
               menu: (base) => ({ ...base, backgroundColor: "#fff" }),
               option: (base, state) => ({
                 ...base,
                 backgroundColor: state.isFocused ? "#f2f2f2" : "#fff",
-                color: "#333",
+                color: "#454545",
               }),
             }}
           />
@@ -209,6 +389,7 @@ function Home() {
             label="Data"
             value={dataAtual}
             size="small"
+            disabled
             InputProps={{ readOnly: true }}
           />
           <Box className="button-group">
@@ -226,7 +407,7 @@ function Home() {
             </Button>
             <Button
               variant="outlined"
-              onClick={() => setOpenDialog(true)}
+              onClick={handleOpenDialogPDF}
               sx={{
                 borderColor: "#a81818",
                 "&:hover": { backgroundColor: "rgba(168,24,24,0.08)" },
@@ -239,6 +420,7 @@ function Home() {
             <Button
               variant="outlined"
               startIcon={<FolderIcon />}
+              onClick={() => setOpenDialogPath(true)}
               sx={{
                 borderColor: "#636363",
                 "&:hover": { backgroundColor: "rgba(99,99,99,0.08)" },
@@ -251,76 +433,77 @@ function Home() {
           </Box>
         </Box>
       </header>
+
       <main className="module-content">
         <Box className="fiori-form-grid-4">
           <TextField
             label="OC n°"
             value={campos.poEleb}
-            disabled="true"
+            disabled
             size="small"
             onChange={(e) => handleChangeCampo("poEleb", e.target.value)}
           />
           <TextField
             label="Código Cliente n°"
             value={campos.codCliente}
-            disabled="true"
+            disabled
             size="small"
             onChange={(e) => handleChangeCampo("codCliente", e.target.value)}
           />
           <TextField
             label="Part Number"
             value={campos.partNumber}
-            disabled="true"
+            disabled
             size="small"
             onChange={(e) => handleChangeCampo("partNumber", e.target.value)}
           />
           <TextField
             label="Lote n°"
             value={campos.lote}
-            disabled="true"
+            disabled
             size="small"
             onChange={(e) => handleChangeCampo("lote", e.target.value)}
           />
           <TextField
             label="Quantidade"
             value={campos.qtdSaldo}
-            disabled="true"
+            disabled
             size="small"
             onChange={(e) => handleChangeCampo("qtdSaldo", e.target.value)}
           />
           <TextField
             label="Valor Produto"
             value={campos.valorPeca}
-            disabled="true"
+            disabled
             size="small"
             onChange={(e) => handleChangeCampo("valorPeca", e.target.value)}
           />
           <TextField
             label="Análise PO"
             value={campos.analisePo}
-            disabled="true"
+            disabled
             size="small"
             onChange={(e) => handleChangeCampo("analisePo", e.target.value)}
           />
           <TextField
             label="Existe CD ou Chamado?"
             value={campos.cd}
-            disabled="true"
+            disabled
             size="small"
             onChange={(e) => handleChangeCampo("cd", e.target.value)}
           />
           <TextField
             label="Cliente"
             value={campos.cliente}
-            disabled="true"
+            disabled
             size="small"
-            onChange={(e) => handleChangeCampo("snPeca", e.target.value)}
+            onChange={(e) => handleChangeCampo("cliente", e.target.value)}
           />
           <TextField
             label="Desenho (2D/MBD) - Folha"
-            value={campos.RevisaoDesenho}
+            value={campos.RevisaoDesenho || ""}
             size="small"
-            required="true"
+            required
             onChange={(e) =>
               handleChangeCampo("RevisaoDesenho", e.target.value)
             }
@@ -329,7 +512,7 @@ function Home() {
             label="Revisão"
             value={campos.revisaoDesenho}
             size="small"
-            required="true"
+            required
             onChange={(e) =>
               handleChangeCampo("revisaoDesenho", e.target.value)
             }
@@ -338,13 +521,13 @@ function Home() {
             label="Desenho (LP) - Revisão"
             value={campos.desenhoLP}
             size="small"
-            required="true"
+            required
             onChange={(e) => handleChangeCampo("desenhoLP", e.target.value)}
           />
           <TextField
             label="Decapagem Realizada?"
             value={campos.decapagem}
-            disabled="true"
+            disabled
             size="small"
             onChange={(e) => handleChangeCampo("decapagem", e.target.value)}
           />
@@ -352,8 +535,9 @@ function Home() {
             label="Serial Decapagem"
             value={campos.snDecapagem}
             multiline
-            disabled="true"
-            rows={3}
+            disabled
+            InputProps={{ readOnly: true, className: "is-readonly" }}
+            rows={2}
             size="small"
             onChange={(e) => handleChangeCampo("snDecapagem", e.target.value)}
           />
@@ -361,22 +545,30 @@ function Home() {
             label="Serial Peça"
             value={campos.snPeca}
             multiline
-            rows={3}
+            rows={2}
             size="small"
             onChange={(e) => handleChangeCampo("snPeca", e.target.value)}
+          />
+          <TextField
+            label="Observações"
+            value={campos.observacoes}
+            multiline
+            rows={2}
+            size="small"
+            onChange={(e) => handleChangeCampo("observacoes", e.target.value)}
           />
           <TextField
             label="Fornecedor"
             value={campos.fornecedor}
             size="small"
-            required="true"
+            required
             onChange={(e) => handleChangeCampo("fornecedor", e.target.value)}
           />
           <TextField
             label="Relatório de Inspeção n°"
             value={campos.relatorioInspecao}
             size="small"
-            required="true"
+            required
             onChange={(e) =>
               handleChangeCampo("relatorioInspecao", e.target.value)
             }
@@ -385,18 +577,19 @@ function Home() {
             label="Certificado de Conformidade MP"
             value={campos.certificadoMP}
             size="small"
-            required="true"
+            required
             onChange={(e) => handleChangeCampo("certificadoMP", e.target.value)}
           />
           <TextField
             label="Responsável Qualidade"
             value={campos.responsavel}
             size="small"
-            required="true"
+            required
             onChange={(e) => handleChangeCampo("responsavel", e.target.value)}
           />
         </Box>
-        <Box className="fiori-form-grid-3">
+
+        <Box className="fiori-form-grid-2">
           <Select
             className="fiori-select"
             classNamePrefix="react-select"
@@ -417,22 +610,10 @@ function Home() {
             }
             placeholder="Operações Executadas"
             isClearable
-            isSearchable
+            isSearchable={false}
             menuPortalTarget={document.body}
-            styles={{
-              control: (base) => ({
-                ...base,
-                backgroundColor: "#454545",
-                size: "small",
-                width: "100%",
-                required: "true",
-              }),
-              menuPortal: (base) => ({
-                ...base,
-                zIndex: 9999,
-                backgroundColor: "#454545",
-              }),
-            }}
+            styles={selectStyles}
+            theme={selectTheme}
           />
           <Select
             className="fiori-select"
@@ -442,44 +623,23 @@ function Home() {
               { value: "Lote Parcial", label: "Lote Parcial" },
               { value: "Lote Complementar", label: "Lote Complementar" },
             ]}
-            onChange={(opt) => handleChangeCampo("tipoEnvio", opt.value)}
+            onChange={(opt) => handleChangeCampo("tipoEnvio", opt?.value || "")}
             value={
               campos.tipoEnvio
                 ? { value: campos.tipoEnvio, label: campos.tipoEnvio }
                 : null
             }
             placeholder="Tipo de Envio"
+            isClearable
             isSearchable={false}
             menuPortalTarget={document.body}
-            styles={{
-              control: (base) => ({ ...base, backgroundColor: "#fff" }),
-              menuPortal: (base) => ({
-                ...base,
-                zIndex: 9999,
-                backgroundColor: "#fff",
-                width: "100%",
-                required: "true",
-              }),
-              menu: (base) => ({ ...base, backgroundColor: "#fff" }),
-              option: (base, state) => ({
-                ...base,
-                backgroundColor: state.isFocused ? "#f2f2f2" : "#fff",
-                color: "##454545",
-              }),
-            }}
-          />
-          <TextField
-            label="Observações"
-            value={campos.observacoes}
-            multiline
-            rows={3}
-            size="small"
-            onChange={(e) => handleChangeCampo("observacoes", e.target.value)}
+            styles={selectStyles}
+            theme={selectTheme}
           />
         </Box>
-        {/* DataGrid condicional */}
+
         {normas.length > 0 && (
-          <Box style={{ height: 300, width: "100%" }}>
+          <Box style={{ height: 250, width: "100%" }}>
             <DataGrid
               rows={rows}
               columns={columns}
@@ -489,18 +649,26 @@ function Home() {
             />
           </Box>
         )}
-        {/* Dialog para gerar PDF */}
-        <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
+
+        {/* Dialog: Gerar Certificado (PDF) */}
+        <Dialog
+          open={openDialogPDF}
+          onClose={() => setOpenDialogPDF(false)}
+          fullWidth
+          maxWidth="sm"
+        >
           <DialogTitle>Gerar Certificado PDF</DialogTitle>
           <DialogContent>
             <TextField
               select
-              label="Selecione o certificado"
+              //label="Selecione o certificado"
               value={certificadoSelecionado}
+              onChange={(e) => setCertificadoSelecionado(e.target.value)}
               fullWidth
+              margin="normal"
               SelectProps={{ native: true }}
             >
-              <option value="">-- Selecione --</option>
+              <option value="">-- Selecione o certificado --</option>
               {certificadosExistentes.map((num) => (
                 <option key={num} value={num}>
                   {num}
@@ -509,11 +677,42 @@ function Home() {
             </TextField>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setOpenDialog(false)}>Cancelar</Button>
+            <Button onClick={() => setOpenDialogPDF(false)}>Cancelar</Button>
             <Button
               variant="contained"
               onClick={() => {
-                /* gerar PDF */
+                if (!certificadoSelecionado) {
+                  openToast(
+                    "warning",
+                    "Seleção obrigatória",
+                    "Escolha um certificado para gerar o PDF."
+                  );
+                  return;
+                }
+                // chamada de geração de PDF -> ajustar rota conforme seu backend
+                axios
+                  .post(
+                    "http://localhost:7105/api/QualityCertificate/gerar-pdf",
+                    {
+                      numero: certificadoSelecionado,
+                    }
+                  )
+                  .then((res) =>
+                    openToast(
+                      "success",
+                      "PDF gerado",
+                      `O certificado PDF foi gerado com sucesso em: ${res.data.path}`
+                    )
+                  )
+                  .catch((err) =>
+                    openToast(
+                      "error",
+                      "Erro ao gerar PDF",
+                      err?.response?.data?.message || err.message
+                    )
+                  )
+
+                  .finally(() => setOpenDialogPDF(false));
               }}
               sx={{
                 backgroundColor: "#a81818",
@@ -523,6 +722,73 @@ function Home() {
               }}
             >
               Gerar PDF
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Dialog: Alterar Caminho do PDF */}
+        <Dialog
+          open={openDialogPath}
+          onClose={() => setOpenDialogPath(false)}
+          fullWidth
+          maxWidth="sm"
+        >
+          <DialogTitle>Alterar Caminho de Salvamento</DialogTitle>
+          <DialogContent>
+            <TextField
+              label="Novo caminho (ex.: C:\Certificados)"
+              value={novoCaminhoPDF}
+              onChange={(e) => setNovoCaminhoPDF(e.target.value)}
+              fullWidth
+              margin="normal"
+              placeholder="C:\\Certificados"
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenDialogPath(false)}>Cancelar</Button>
+            <Button
+              variant="contained"
+              onClick={() => {
+                if (!novoCaminhoPDF?.trim()) {
+                  openToast(
+                    "warning",
+                    "Caminho inválido",
+                    "Informe um caminho válido para salvar os PDFs."
+                  );
+                  return;
+                }
+                // salvar caminho no backend/config
+                axios
+                  .post(
+                    "http://localhost:7105/api/QualityCertificate/caminho",
+                    {
+                      path: novoCaminhoPDF,
+                    }
+                  )
+                  .then(() =>
+                    openToast(
+                      "success",
+                      "Caminho atualizado",
+                      "O caminho padrão de salvamento foi atualizado."
+                    )
+                  )
+                  .catch((err) =>
+                    openToast(
+                      "error",
+                      "Erro ao salvar caminho",
+                      err?.response?.data?.message || err.message
+                    )
+                  )
+                  .finally(() => setOpenDialogPath(false));
+              }}
+              sx={{
+                backgroundColor: "#a81818",
+                color: "#fff",
+                "&:hover": { backgroundColor: "#b71c1c" },
+                textTransform: "none",
+              }}
+            >
+              Salvar
             </Button>
           </DialogActions>
         </Dialog>
