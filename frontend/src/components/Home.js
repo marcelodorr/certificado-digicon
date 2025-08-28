@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import React, { useEffect, useState, useMemo } from "react";
+import api from "../services/api";
 import "./Home.css";
 import Select from "react-select";
 import { DataGrid } from "@mui/x-data-grid";
@@ -19,16 +19,19 @@ import {
 } from "@mui/material";
 
 function TransitionRight(props) {
-  // entra pela direita -> direction "left"
   return <Slide {...props} direction="left" />;
 }
 
 function Home() {
+  // ---------- States ----------
   const [ordens, setOrdens] = useState([]);
   const [operacoes, setOperacoes] = useState([]);
   const [normas, setNormas] = useState([]);
   const [dataAtual, setDataAtual] = useState("");
   const [numeroCertificado, setNumeroCertificado] = useState("");
+
+  // nova seleção por Id
+  const [selectedOpId, setSelectedOpId] = useState(null);
 
   // Dialogs
   const [openDialogPDF, setOpenDialogPDF] = useState(false);
@@ -41,37 +44,16 @@ function Home() {
   // Snackbar/Alert
   const [toast, setToast] = useState({
     open: false,
-    severity: "info", // "success" | "info" | "warning" | "error"
+    severity: "info",
     title: "",
     message: "",
   });
-
-  const handleOpenDialogPDF = async () => {
-    try {
-      const { data } = await axios.get(
-        "http://localhost:7105/api/QualityCertificate/lista"
-      );
-      setCertificadosExistentes(Array.isArray(data) ? data : []);
-      if (!data || data.length === 0) {
-        openToast("info", "Sem certificados", "Não há certificados salvos.");
-      }
-    } catch (err) {
-      openToast(
-        "error",
-        "Erro ao buscar certificados",
-        err?.response?.data?.message || err.message
-      );
-      setCertificadosExistentes([]);
-    } finally {
-      setOpenDialogPDF(true);
-    }
-  };
 
   const openToast = (severity, title, message) =>
     setToast({ open: true, severity, title, message });
   const closeToast = () => setToast((t) => ({ ...t, open: false }));
 
-  // fora do componente OU antes do useState
+  // ---------- Helpers ----------
   const initialCampos = () => ({
     opEleb: "",
     poEleb: "",
@@ -100,9 +82,10 @@ function Home() {
   const [campos, setCampos] = useState(initialCampos());
 
   const resetForm = async () => {
-    setCampos(initialCampos()); // limpa todos os campos
-    setNormas([]); // limpa grid
+    setCampos(initialCampos());
+    setNormas([]);
     setCertificadoSelecionado("");
+    setSelectedOpId(null);
     setOpenDialogPDF(false);
   };
 
@@ -141,10 +124,14 @@ function Home() {
     },
   });
 
-  // Carregar certificado, data e ordens
+  // Normaliza id (pode vir como Id do backend em PascalCase)
+  const getId = (o) => o?.id ?? o?.Id;
+
+  // ---------- Effects ----------
   useEffect(() => {
-    axios
-      .get("http://localhost:7105/api/QualityCertificate/novo-certificado")
+    // novo número
+    api
+      .get("/api/QualityCertificate/novo-certificado")
       .then((res) => setNumeroCertificado(res.data.numero))
       .catch((err) =>
         openToast(
@@ -156,9 +143,10 @@ function Home() {
 
     setDataAtual(new Date().toLocaleDateString("pt-BR"));
 
-    axios
-      .get("http://localhost:7105/api/ControleEleb/ordens-finalizadas")
-      .then((res) => setOrdens(res.data))
+    // ordens finalizadas
+    api
+      .get("/api/ControleEleb/ordens-finalizadas")
+      .then((res) => setOrdens(Array.isArray(res.data) ? res.data : []))
       .catch((err) =>
         openToast(
           "error",
@@ -167,9 +155,10 @@ function Home() {
         )
       );
 
-    axios
-      .get("http://localhost:7105/api/Operacao")
-      .then((res) => setOperacoes(res.data))
+    // operações
+    api
+      .get("/api/Operacao")
+      .then((res) => setOperacoes(Array.isArray(res.data) ? res.data : []))
       .catch((err) =>
         openToast(
           "error",
@@ -182,12 +171,12 @@ function Home() {
   // Carregar normas por partNumber
   useEffect(() => {
     if (campos.partNumber) {
-      axios
-        .get(`http://localhost:7105/api/Norma/partnumber/${campos.partNumber}`)
-        .then((res) => setNormas(res.data))
+      api
+        .get(`/api/Norma/partnumber/${campos.partNumber}`)
+        .then((res) => setNormas(Array.isArray(res.data) ? res.data : []))
         .catch((err) => {
           if (err.response && err.response.status === 404) {
-            setNormas([]); // sem normas
+            setNormas([]);
           } else {
             openToast(
               "error",
@@ -201,10 +190,38 @@ function Home() {
     }
   }, [campos.partNumber]);
 
-  // Seleção de ordem
+  // ---------- Handlers ----------
+  const handleOpenDialogPDF = async () => {
+    try {
+      const { data } = await api.get("/api/QualityCertificate/lista");
+      setCertificadosExistentes(Array.isArray(data) ? data : []);
+      if (!data || data.length === 0) {
+        openToast("info", "Sem certificados", "Não há certificados salvos.");
+      }
+    } catch (err) {
+      openToast(
+        "error",
+        "Erro ao buscar certificados",
+        err?.response?.data?.message || err.message
+      );
+      setCertificadosExistentes([]);
+    } finally {
+      setOpenDialogPDF(true);
+    }
+  };
+
+  const handleChangeCampo = (nome, valor) => {
+    setCampos((prev) => ({ ...prev, [nome]: valor }));
+  };
+
+  // Seleção de ordem agora por ID
   const handleOpChange = (option) => {
-    const ordem = ordens.find((o) => o.opEleb === option?.value);
-    if (!ordem) return;
+    const ordem = ordens.find((o) => getId(o) === option?.value);
+    if (!ordem) {
+      setSelectedOpId(null);
+      return;
+    }
+    setSelectedOpId(getId(ordem));
     setCampos({
       opEleb: ordem.opEleb || "N/A",
       poEleb: ordem.poEleb || "N/A",
@@ -231,13 +248,27 @@ function Home() {
     });
   };
 
-  // Atualizar campo
-  const handleChangeCampo = (nome, valor) => {
-    setCampos((prev) => ({ ...prev, [nome]: valor }));
-  };
+  // Opções do select com Id como value
+  const ordemOptions = useMemo(
+    () =>
+      ordens.map((o) => ({
+        value: getId(o),
+        label: `${o.opEleb}${o.partNumber ? " · " + o.partNumber : ""}`,
+      })),
+    [ordens]
+  );
 
-  // Salvar certificado
+  // Salvar certificado + liberar por Id
   const handleSalvar = async () => {
+    if (!selectedOpId) {
+      openToast(
+        "warning",
+        "Seleção obrigatória",
+        "Selecione uma OP antes de salvar."
+      );
+      return;
+    }
+
     const payload = {
       NumeroCertificado: numeroCertificado,
       Ordem: campos.opEleb,
@@ -265,6 +296,9 @@ function Home() {
       operacaoDescricao: "",
       CDChamado: campos.cd || "N/A",
       DescricaoOperacao: campos.operacaoDescricao || "N/A",
+
+      // opcional: se o backend aceitar, já manda junto (se estiver NotMapped, será ignorado sem erro)
+      ControleElebId: selectedOpId,
     };
 
     if (!payload.CDChamado || !payload.DescricaoOperacao) {
@@ -277,9 +311,11 @@ function Home() {
     }
 
     try {
-      await axios.post("http://localhost:7105/api/QualityCertificate", payload);
-      await axios.put("http://localhost:7105/api/ControleEleb/liberar", {
-        opEleb: campos.opEleb,
+      await api.post("/api/QualityCertificate", payload);
+
+      // NOVA rota por Id:
+      await api.post("/api/ControleEleb/liberar-por-id", {
+        id: selectedOpId,
         numeroCertificado: numeroCertificado,
       });
 
@@ -290,8 +326,8 @@ function Home() {
       );
 
       // novo número
-      axios
-        .get("http://localhost:7105/api/QualityCertificate/novo-certificado")
+      api
+        .get("/api/QualityCertificate/novo-certificado")
         .then((res) => setNumeroCertificado(res.data.numero))
         .catch((err) =>
           openToast(
@@ -302,7 +338,10 @@ function Home() {
         );
 
       setDataAtual(new Date().toLocaleDateString("pt-BR"));
-      setOrdens((prev) => prev.filter((o) => o.opEleb !== campos.opEleb));
+
+      // remove somente a ordem selecionada (por Id)
+      setOrdens((prev) => prev.filter((o) => getId(o) !== selectedOpId));
+
       await resetForm();
     } catch (err) {
       openToast(
@@ -313,7 +352,7 @@ function Home() {
     }
   };
 
-  // Configuração do DataGrid
+  // ---------- Grid de Normas ----------
   const columns = [
     { field: "partNumber", headerName: "PartNumber", flex: 1 },
     { field: "technicalStandard", headerName: "TechnicalStandard", flex: 1 },
@@ -328,6 +367,7 @@ function Home() {
     revision: n.revision,
   }));
 
+  // ---------- Render ----------
   return (
     <div className="module-container">
       {/* SNACKBAR / ALERT (top-right) */}
@@ -358,14 +398,15 @@ function Home() {
             disabled
             InputProps={{ readOnly: true }}
           />
+
           <Select
             className="fiori-select"
             classNamePrefix="react-select"
-            options={ordens.map((o) => ({ value: o.opEleb, label: o.opEleb }))}
+            options={ordemOptions}
             onChange={handleOpChange}
             value={
-              campos.opEleb
-                ? { value: campos.opEleb, label: campos.opEleb }
+              selectedOpId
+                ? ordemOptions.find((opt) => opt.value === selectedOpId) || null
                 : null
             }
             placeholder="Ordem nº"
@@ -385,6 +426,7 @@ function Home() {
               }),
             }}
           />
+
           <TextField
             label="Data"
             value={dataAtual}
@@ -392,6 +434,7 @@ function Home() {
             disabled
             InputProps={{ readOnly: true }}
           />
+
           <Box className="button-group">
             <Button
               variant="contained"
@@ -405,6 +448,7 @@ function Home() {
             >
               Salvar Certificado
             </Button>
+
             <Button
               variant="outlined"
               onClick={handleOpenDialogPDF}
@@ -417,6 +461,7 @@ function Home() {
             >
               Gerar Certificado
             </Button>
+
             <Button
               variant="outlined"
               startIcon={<FolderIcon />}
@@ -501,11 +546,11 @@ function Home() {
           />
           <TextField
             label="Desenho (2D/MBD) - Folha"
-            value={campos.RevisaoDesenho || ""}
+            value={campos.revisaoDesenho || ""}
             size="small"
             required
             onChange={(e) =>
-              handleChangeCampo("RevisaoDesenho", e.target.value)
+              handleChangeCampo("revisaoDesenho", e.target.value)
             }
           />
           <TextField
@@ -661,7 +706,6 @@ function Home() {
           <DialogContent>
             <TextField
               select
-              //label="Selecione o certificado"
               value={certificadoSelecionado}
               onChange={(e) => setCertificadoSelecionado(e.target.value)}
               fullWidth
@@ -689,14 +733,10 @@ function Home() {
                   );
                   return;
                 }
-                // chamada de geração de PDF -> ajustar rota conforme seu backend
-                axios
-                  .post(
-                    "http://localhost:7105/api/QualityCertificate/gerar-pdf",
-                    {
-                      numero: certificadoSelecionado,
-                    }
-                  )
+                api
+                  .post("/api/QualityCertificate/gerar-pdf", {
+                    numero: certificadoSelecionado,
+                  })
                   .then((res) =>
                     openToast(
                       "success",
@@ -711,7 +751,6 @@ function Home() {
                       err?.response?.data?.message || err.message
                     )
                   )
-
                   .finally(() => setOpenDialogPDF(false));
               }}
               sx={{
@@ -736,7 +775,7 @@ function Home() {
           <DialogTitle>Alterar Caminho de Salvamento</DialogTitle>
           <DialogContent>
             <TextField
-              label="Novo caminho (ex.: C:\Certificados)"
+              label="Novo caminho (ex.: C:\\Certificados)"
               value={novoCaminhoPDF}
               onChange={(e) => setNovoCaminhoPDF(e.target.value)}
               fullWidth
@@ -757,14 +796,10 @@ function Home() {
                   );
                   return;
                 }
-                // salvar caminho no backend/config
-                axios
-                  .post(
-                    "http://localhost:7105/api/QualityCertificate/caminho",
-                    {
-                      path: novoCaminhoPDF,
-                    }
-                  )
+                api
+                  .post("/api/QualityCertificate/caminho", {
+                    path: novoCaminhoPDF,
+                  })
                   .then(() =>
                     openToast(
                       "success",

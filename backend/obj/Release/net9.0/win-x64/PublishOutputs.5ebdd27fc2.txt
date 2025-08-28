@@ -1,0 +1,16 @@
+C:\Certificado_Digicon\publish-sc\publish-sc\web.config
+C:\Certificado_Digicon\publish-sc\appsettings.Development.json
+C:\Certificado_Digicon\publish-sc\appsettings.json
+C:\Certificado_Digicon\publish-sc\package-lock.json
+C:\Certificado_Digicon\publish-sc\package.json
+C:\Certificado_Digicon\publish-sc\publish-sc\appsettings.Development.json
+C:\Certificado_Digicon\publish-sc\publish-sc\appsettings.json
+C:\Certificado_Digicon\publish-sc\publish-sc\backend.deps.json
+C:\Certificado_Digicon\publish-sc\publish-sc\backend.runtimeconfig.json
+C:\Certificado_Digicon\publish-sc\publish-sc\backend.staticwebassets.endpoints.json
+C:\Certificado_Digicon\publish-sc\publish-sc\package-lock.json
+C:\Certificado_Digicon\publish-sc\publish-sc\package.json
+C:\Certificado_Digicon\publish-sc\publish-sc\wwwroot\asset-manifest.json
+C:\Certificado_Digicon\publish-sc\publish-sc\wwwroot\manifest.json
+C:\Certificado_Digicon\publish-sc\backend.pdb
+C:\Certificado_Digicon\publish-sc\backend.exe

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import logo from "../assets/digicon_logo.png";
 import { Snackbar, Alert, AlertTitle } from "@mui/material";
 import "./Login.css";
+import api from "../services/api";
 
 const Login = ({ onLogin }) => {
   const [username, setUsername] = useState("");
@@ -24,37 +25,24 @@ const Login = ({ onLogin }) => {
     setError("");
 
     try {
-      const response = await fetch(
-        "http://localhost:7105/api/Login/authenticate",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ User: username, Password: password }),
-        }
-      );
+      await api.post("/api/Login/authenticate", {
+        User: username,
+        Password: password,
+      });
 
-      if (response.ok) {
-        // Login OK
-        onLogin();
-        setAlert({
-          open: true,
-          message: "Login realizado com sucesso!",
-          severity: "success",
-        });
-      } else {
-        // Login falhou
-        //setError("Usuário ou senha incorretos.");
-        setAlert({
-          open: true,
-          message: "Usuário ou senha incorretos.",
-          severity: "error",
-        });
-      }
-    } catch (err) {
-      setError("Erro ao conectar ao servidor.");
+      // Se chegou aqui sem erro → sucesso
+      onLogin();
       setAlert({
         open: true,
-        message: "Erro ao conectar ao servidor.",
+        message: "Login realizado com sucesso!",
+        severity: "success",
+      });
+    } catch (err) {
+      console.error("Erro no login:", err);
+      setError("Usuário ou senha incorretos.");
+      setAlert({
+        open: true,
+        message: "Usuário ou senha incorretos.",
         severity: "error",
       });
     }
@@ -65,42 +53,30 @@ const Login = ({ onLogin }) => {
     setRegisterMessage("");
 
     try {
-      const response = await fetch("http://localhost:7105/api/Login/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: newUsername,
-          password: newPassword,
-        }),
+      await api.post("/api/Login/create", {
+        username: newUsername,
+        password: newPassword,
       });
 
-      if (response.ok) {
-        //setRegisterMessage("Usuário criado com sucesso!");
-        setNewUsername("");
-        setNewPassword("");
-        setAlert({
-          open: true,
-          message: "Usuário criado com sucesso!",
-          severity: "success",
-        });
-
-        setTimeout(() => {
-          setShowDialog(false);
-          setRegisterMessage("");
-        }, 1500);
-      } else {
-        setRegisterMessage("Erro ao criar usuário.");
-        setAlert({
-          open: true,
-          message: "Erro ao criar usuário.",
-          severity: "error",
-        });
-      }
-    } catch (err) {
-      setRegisterMessage("Erro ao conectar ao servidor.");
+      // sucesso
+      setNewUsername("");
+      setNewPassword("");
       setAlert({
         open: true,
-        message: "Erro ao conectar ao servidor.",
+        message: "Usuário criado com sucesso!",
+        severity: "success",
+      });
+
+      setTimeout(() => {
+        setShowDialog(false);
+        setRegisterMessage("");
+      }, 1500);
+    } catch (err) {
+      console.error("Erro ao criar usuário:", err);
+      setRegisterMessage("Erro ao criar usuário.");
+      setAlert({
+        open: true,
+        message: "Erro ao criar usuário.",
         severity: "error",
       });
     }
@@ -138,6 +114,7 @@ const Login = ({ onLogin }) => {
           Criar Usuário
         </button>
       </form>
+
       {showDialog && (
         <div className="dialog-overlay">
           <div className="dialog-box">
@@ -173,10 +150,9 @@ const Login = ({ onLogin }) => {
         </div>
       )}
 
-      {/* Snackbar para exibir alertas */}
       <Snackbar
         open={alert.open}
-        autoHideDuration={6000} // Tempo de exibição do alerta
+        autoHideDuration={6000}
         anchorOrigin={{ vertical: "top", horizontal: "right" }}
         onClose={() => setAlert({ ...alert, open: false })}
       >

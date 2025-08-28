@@ -54,6 +54,6 @@ namespace backend.Models
         [Column("Lote_ELEB")]
         public string? lote { get; set; }
         [Column("Num_Certificado")]
-        public string NumCertificado { get; set; }
+        public string? NumCertificado { get; set; }
     }
 }

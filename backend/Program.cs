@@ -5,6 +5,18 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// === Rodar como Serviço do Windows ===
+if (OperatingSystem.IsWindows())
+{
+    builder.Host.UseWindowsService();
+}
+
+// === Kestrel ouvindo em todas as interfaces na porta 5080 ===
+// (Clientes na rede acessarão via http://IP-DA-MAQUINA:5080/)
+builder.WebHost
+    .UseKestrel()
+    .UseUrls("http://0.0.0.0:5080");
+
 // Adiciona serviços do Swagger (opcional para documentação da API)
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -27,13 +39,11 @@ builder.Services.AddCors(options =>
 
 // Adiciona o DbContext para acesso ao banco de dados
 builder.Services.AddDbContext<AppDbContext>(options =>
+    
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Adiciona controllers com suporte para JSON (Newtonsoft.Json)
 builder.Services.AddControllers().AddNewtonsoftJson();
-
-// Adiciona o suporte ao Swagger
-builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
@@ -50,7 +60,11 @@ app.UseCors("AllowAll");
 // Serve arquivos estáticos (se você estiver servindo o frontend React)
 app.UseStaticFiles();  // Serve os arquivos estáticos da pasta wwwroot (geralmente criada ao rodar `npm run build` no frontend)
 
-app.UseHttpsRedirection();  // Redireciona todas as requisições HTTP para HTTPS
+if (builder.Configuration.GetSection("Kestrel:Endpoints:Https").Exists())
+{
+    app.UseHttpsRedirection();
+    // app.UseHsts();
+}
 app.UseAuthorization();  // Habilita a autorização de segurança
 
 // Mapeia as rotas da API

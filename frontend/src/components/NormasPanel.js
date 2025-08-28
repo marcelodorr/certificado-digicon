@@ -8,7 +8,7 @@ import {
   DialogContent,
   DialogTitle,
 } from "@mui/material";
-import axios from "axios";
+import api from "../services/api";
 import { DataGrid, GridActionsCellItem } from "@mui/x-data-grid";
 import { Box, Button, TextField } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
@@ -23,7 +23,7 @@ function NormasPanel() {
     technicalStandard: "",
     requirement: "",
     revision: "",
-    createDate: "",
+    createDate: new Date().toISOString(),
   });
 
   const [alert, setAlert] = useState({
@@ -36,11 +36,11 @@ function NormasPanel() {
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedNormId, setSelectedNormId] = useState(null);
 
-  const API_URL = "http://localhost:7105/api/norma";
+  const API_BASE = "/api/Norma";
 
   const fetchNormas = async () => {
     try {
-      const res = await axios.get(`${API_URL}/todas`);
+      const res = await api.get(`${API_BASE}/todas`);
       setNormas(res.data);
     } catch (err) {
       console.error(err);
@@ -64,14 +64,14 @@ function NormasPanel() {
   const handleSubmit = async () => {
     try {
       if (isEditing) {
-        await axios.put(API_URL, formData);
+        await api.put(API_BASE, formData);
         setAlert({
           open: true,
           message: "Norma atualizada com sucesso.",
           severity: "success",
         });
       } else {
-        await axios.post(API_URL, formData);
+        await api.post(API_BASE, formData);
         setAlert({
           open: true,
           message: "Norma salva com sucesso.",
@@ -137,7 +137,7 @@ function NormasPanel() {
     if (selectedNormId === null) return;
 
     try {
-      const response = await axios.delete(`${API_URL}/${selectedNormId}`);
+      const response = await api.delete(`${API_BASE}/${selectedNormId}`);
       setAlert({
         open: true,
         message: response.data.message || "Norma excluída com sucesso.",

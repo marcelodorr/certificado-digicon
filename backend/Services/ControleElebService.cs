@@ -48,5 +48,23 @@ namespace backend.Services
             await _context.SaveChangesAsync();
             return true;
         }
+
+        public async Task<bool> LiberarPorIdAsync(int id, string numeroCertificado)
+        {
+            var ordem = await _context.ControleElebs.FirstOrDefaultAsync(x => x.ID == id);
+            if (ordem == null) return false;
+
+            // Se você quiser restringir somente quando Finalizado:
+            if (!string.Equals(ordem.Situacao, "Finalizado", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            ordem.Situacao = "Liberado";
+            ordem.NumCertificado = numeroCertificado;
+            // se existir DataLiberacao:
+            // ordem.DataLiberacao ??= DateTime.Now;
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
 }

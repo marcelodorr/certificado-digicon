@@ -1,0 +1,20 @@
+{
+  "files": {
+    "main.css": "/static/css/main.d5c4b1ec.css",
+    "main.js": "/static/js/main.bceb4212.js",
+    "static/js/453.670e15c7.chunk.js": "/static/js/453.670e15c7.chunk.js",
+    "static/media/digicon_logo.png": "/static/media/digicon_logo.3f858d780e4d004d7483.png",
+    "static/media/fa-solid-900.woff2": "/static/media/fa-solid-900.f54756da1f3d1b88887f.woff2",
+    "static/media/fa-brands-400.woff2": "/static/media/fa-brands-400.1f6bad931d92a0a52c45.woff2",
+    "static/media/fa-regular-400.woff2": "/static/media/fa-regular-400.5632c43107f4d3fa4806.woff2",
+    "static/media/fa-v4compatibility.woff2": "/static/media/fa-v4compatibility.24fc9d217708cb3f0362.woff2",
+    "index.html": "/index.html",
+    "main.d5c4b1ec.css.map": "/static/css/main.d5c4b1ec.css.map",
+    "main.bceb4212.js.map": "/static/js/main.bceb4212.js.map",
+    "453.670e15c7.chunk.js.map": "/static/js/453.670e15c7.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.d5c4b1ec.css",
+    "static/js/main.bceb4212.js"
+  ]
+}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../services/api"; // ✅ usa cliente centralizado
 import "./ConfigDialog.css";
 
 const ConfigDialog = ({ onClose }) => {
@@ -10,8 +10,8 @@ const ConfigDialog = ({ onClose }) => {
 
   // Ao abrir, busca config do backend
   useEffect(() => {
-    axios
-      .get("https://localhost:7105/api/DbConfig")
+    api
+      .get("/api/DbConfig")
       .then((res) => {
         const connectionString = res.data.defaultConnection || ""; // <- ajuste aqui
         const regex =
@@ -35,26 +35,15 @@ const ConfigDialog = ({ onClose }) => {
     const connectionString = `Server=${server};Database=${database};User Id=${user};Password=${password};Encrypt=True;TrustServerCertificate=True;`;
 
     try {
-      const response = await fetch(
-        "https://localhost:7105/api/DbConfig/update-connection",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ defaultConnection: connectionString }),
-        }
-      );
+      await api.post("/api/DbConfig/update-connection", {
+        defaultConnection: connectionString,
+      });
 
-      if (response.ok) {
-        alert("Conexão salva com sucesso!");
-        onClose();
-      } else {
-        const error = await response.json();
-        console.error("Erro ao salvar conexão:", error);
-        alert("Erro ao salvar conexão.");
-      }
+      alert("Conexão salva com sucesso!");
+      onClose();
     } catch (err) {
-      console.error("Erro de rede:", err);
-      alert("Erro de rede ao tentar salvar.");
+      console.error("Erro ao salvar conexão:", err);
+      alert("Erro ao salvar conexão.");
     }
   };
 

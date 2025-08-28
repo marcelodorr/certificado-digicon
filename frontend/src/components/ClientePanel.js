@@ -9,7 +9,7 @@ import {
   DialogTitle,
   Button,
 } from "@mui/material";
-import axios from "axios";
+import api from "../services/api";
 import { DataGrid, GridActionsCellItem } from "@mui/x-data-grid";
 import { Box, TextField } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
@@ -36,7 +36,7 @@ const ClientePanel = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState(null);
 
-  const API_URL = "http://localhost:7105/api/Cliente";
+  const API_BASE = "/api/Cliente";
 
   useEffect(() => {
     fetchClientes();
@@ -44,7 +44,7 @@ const ClientePanel = () => {
 
   const fetchClientes = async () => {
     try {
-      const response = await axios.get(API_URL);
+      const response = await api.get(API_BASE);
       setClientes(response.data);
       setMessage("");
     } catch (error) {
@@ -68,14 +68,14 @@ const ClientePanel = () => {
     try {
       let response;
       if (isEditing) {
-        response = await axios.put(API_URL, formCliente);
+        response = await api.put(API_BASE, formCliente);
         setAlert({
           open: true,
           message: "Cliente editado com sucesso!",
           severity: "success",
         });
       } else {
-        response = await axios.post(API_URL, formCliente);
+        response = await api.post(API_BASE, formCliente);
         setAlert({
           open: true,
           message: "Cliente adicionado com sucesso!",
@@ -119,7 +119,7 @@ const ClientePanel = () => {
     if (selectedClientId === null) return;
 
     try {
-      const response = await axios.delete(`${API_URL}/${selectedClientId}`);
+      const response = await api.delete(`${API_BASE}/${selectedClientId}`);
       setAlert({
         open: true,
         message: response.data.message || "Cliente excluído com sucesso!",

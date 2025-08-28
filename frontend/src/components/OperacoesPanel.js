@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../services/api";
 import { DataGrid, GridActionsCellItem } from "@mui/x-data-grid";
 import {
   Box,
@@ -35,11 +35,11 @@ function OperacoesPanel() {
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedOperacaoId, setSelectedOperacaoId] = useState(null);
 
-  const API_URL = "http://localhost:7105/api/Operacao"; // Certifique-se de que o endpoint está correto
+  const API_BASE = "/api/Operacao"; // Certifique-se de que o endpoint está correto
 
   const fetchOperacoes = async () => {
     try {
-      const res = await axios.get(API_URL);
+      const res = await api.get(API_BASE);
       setOperacoes(res.data);
     } catch (err) {
       console.error(err);
@@ -63,14 +63,14 @@ function OperacoesPanel() {
   const handleSubmit = async () => {
     try {
       if (isEditing) {
-        await axios.put(API_URL, formData);
+        await api.put(API_BASE, formData);
         setAlert({
           open: true,
           message: "Operação atualizada com sucesso.",
           severity: "success",
         });
       } else {
-        await axios.post(API_URL, formData);
+        await api.post(API_BASE, formData);
         setAlert({
           open: true,
           message: "Operação salva com sucesso.",
@@ -119,7 +119,7 @@ function OperacoesPanel() {
     if (selectedOperacaoId === null) return;
 
     try {
-      await axios.delete(`${API_URL}/${selectedOperacaoId}`);
+      await api.delete(`${API_BASE}/${selectedOperacaoId}`);
       setAlert({
         open: true,
         message: "Operação excluída com sucesso.",
